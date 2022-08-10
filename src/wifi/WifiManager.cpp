@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <WiFiClient.h>
-#include <ezTime.h>
+//#include <ezTime.h>
 #include <AsyncElegantOTA.h>
 
 #include "wifi/WifiManager.h"
@@ -30,7 +30,7 @@ int dBmtoPercentage(int dBm) {
   return quality;
 }
 
-const String htmlTop PROGMEM = "<html>\
+const String htmlTop = "<html>\
   <head>\
     <title>%s</title>\
     <style>\
@@ -40,13 +40,13 @@ const String htmlTop PROGMEM = "<html>\
   <body>\
     <h1>%s LED Controller</h1>";
 
-const String htmlBottom PROGMEM = "<br><br><hr>\
+const String htmlBottom = "<br><br><hr>\
   <p>Uptime: %02d:%02d:%02d | Device: %s</p>\
   %s\
   </body>\
 </html>";
 
-const String htmlWifiApConnectForm PROGMEM = "<h2>Connect to WiFi Access Point (AP)</h2>\
+const String htmlWifiApConnectForm = "<h2>Connect to WiFi Access Point (AP)</h2>\
     <form method='POST' action='/connect' enctype='application/x-www-form-urlencoded'>\
       <label for='ssid'>SSID (AP Name):</label><br>\
       <input type='text' id='ssid' name='ssid'><br><br>\
@@ -55,7 +55,7 @@ const String htmlWifiApConnectForm PROGMEM = "<h2>Connect to WiFi Access Point (
       <input type='submit' value='Connect...'>\
     </form>";
 
-const String htmlDeviceConfigs PROGMEM = "<hr><h2>Configs</h2>\
+const String htmlDeviceConfigs = "<hr><h2>Configs</h2>\
     <form method='POST' action='/config' enctype='application/x-www-form-urlencoded'>\
       <label for='deviceName'>Device name:</label><br>\
       <input type='text' id='deviceName' name='deviceName' value='%s'><br>\

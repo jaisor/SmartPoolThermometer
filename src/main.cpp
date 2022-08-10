@@ -9,9 +9,15 @@
 #include <OneWire.h>
 #include <DS18B20.h>
 
+#include "wifi/WifiManager.h"
 
 #define PIN_LED 13
 #define ONE_WIRE_BUS 2
+
+CWifiManager *wifiManager;
+
+unsigned long tsSmoothBoot;
+bool smoothBoot;
 
 //EnergySaving pwrSave;
 //RTC_SAMD21 rtc;
@@ -21,15 +27,28 @@ DS18B20 tempSensor(&oneWire);
 void dummyfunc() {}
 
 void setup() {
-    //rtc.begin();
     Serial.begin(115200);  while (!Serial); delay(200);
     randomSeed(analogRead(0));
 
     Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+    Log.noticeln("Initializing...");  
 
-    pinMode(PIN_LED,OUTPUT);
-    digitalWrite(PIN_LED,HIGH);
+#ifdef LED_PIN_BOARD
+    pinMode(LED_PIN_BOARD, OUTPUT);
+    digitalWrite(LED_PIN_BOARD, HIGH);
+#endif
 
+    if (EEPROM_initAndCheckFactoryReset() >= 3) {
+        Log.warningln("Factory reset conditions met!");
+        EEPROM_wipe();    
+    }
+
+    tsSmoothBoot = millis();
+    smoothBoot = false;
+
+    EEPROM_loadConfig();
+
+    wifiManager = new CWifiManager();
     /*
     rtc.adjust(DateTime(2030, 4, 1, 8, 30, 0) );
     rtc.attachInterrupt(dummyfunc); 
@@ -45,28 +64,43 @@ void setup() {
 
     tempSensor.setConfig(DS18B20_CRC);
     tempSensor.begin();
+    tempSensor.setResolution(12);
+    tempSensor.requestTemperatures();
 
     Log.infoln("Initialized");
-    Serial.println(F("Initialized"));
 }
 
 void loop() {
-    
-    /*
-    for(uint16_t uilp=0; uilp<3; uilp++) {
-        digitalWrite(PIN_LED,HIGH);
-        delay(1000);
-        digitalWrite(PIN_LED,LOW);
-        delay(1000);
+
+    static unsigned long tsMillis = millis();
+    static bool ledOn = false;
+
+    if (!smoothBoot && millis() - tsSmoothBoot > FACTORY_RESET_CLEAR_TIMER_MS) {
+        smoothBoot = true;
+        EEPROM_clearFactoryReset();
+        Log.noticeln("Device booted smoothly!");
     }
-    digitalWrite(PIN_LED,HIGH);
-    */
 
-    tempSensor.setResolution(12);
-    tempSensor.requestTemperatures();
-    while (!tempSensor.isConversionComplete()) {}
+    wifiManager->loop();
 
-    Log.infoln("Temp %0.2f", tempSensor.getTempC());
+    if (wifiManager->isRebootNeeded()) {
+        return;
+    }
     
-    //pwrSave.standby();
+    
+    if (millis() - tsMillis > 1000) {
+        tsMillis = millis();
+        ledOn = !ledOn;
+        digitalWrite(PIN_LED, ledOn ? HIGH : LOW);
+    }
+
+    
+    if (tempSensor.isConversionComplete()) {
+        float t = tempSensor.getTempC();
+        Log.infoln("Temp: %FC %FF", t, t*1.8+32);
+        tempSensor.setResolution(12);
+        tempSensor.requestTemperatures();
+    }
+    
+    delay(1000);
 }
