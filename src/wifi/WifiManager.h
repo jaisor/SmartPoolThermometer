@@ -9,39 +9,44 @@
   #include <ESPAsyncTCP.h>
 #endif
 #include <ESPAsyncWebServer.h>
+#include <PubSubClient.h>
 
 #include "BaseManager.h"
+#include "wifi/SensorProvider.h"
 
 typedef enum {
-  WF_CONNECTING = 0,
-  WF_LISTENING = 1
+    WF_CONNECTING = 0,
+    WF_LISTENING = 1
 } wifi_status;
 
 class CWifiManager: public CBaseManager {
 
 private:
-  unsigned long tMillis;
-  wifi_status status;
-  char softAP_SSID[32];
-  char SSID[32];
-  bool apMode;
-  bool rebootNeeded;
-  
+    unsigned long tMillis;
+    wifi_status status;
+    char softAP_SSID[32];
+    char SSID[32];
+    bool apMode;
+    bool rebootNeeded;
 
-  AsyncWebServer* server;
+    AsyncWebServer* server;
+    PubSubClient mqtt;
+    ISensorProvider *sensorProvider;
 
-  void connect();
-  void listen();
+    void connect();
+    void listen();
 
-  void handleRoot(AsyncWebServerRequest *request);
-  void handleConnect(AsyncWebServerRequest *request);
-  void handleConfig(AsyncWebServerRequest *request);
+    void handleRoot(AsyncWebServerRequest *request);
+    void handleConnect(AsyncWebServerRequest *request);
+    void handleConfig(AsyncWebServerRequest *request);
+
+    void postSensorUpdate();
         
 public:
-	CWifiManager();
-  virtual void loop();
+	CWifiManager(ISensorProvider *sp);
+    virtual void loop();
 
-  bool isRebootNeeded() { return rebootNeeded; }
+    bool isRebootNeeded() { return rebootNeeded; }
 };
 
 #endif

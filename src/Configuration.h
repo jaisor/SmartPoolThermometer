@@ -49,6 +49,13 @@
     #define LED_COLOR_ORDER GRB
 #endif
 
+#define TEMP_SENSOR
+#ifdef TEMP_SENSOR
+    #define TEMP_SENSOR_DS18B20
+    //#define TEMP_SENSOR_BME280
+    #define TEMP_SENSOR_PIN 2
+#endif
+
 struct configuration_t {
 
     #ifdef WIFI
