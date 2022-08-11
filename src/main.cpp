@@ -9,8 +9,6 @@
 #include "wifi/WifiManager.h"
 #include "Device.h"
 
-#define PIN_LED 2
-
 CWifiManager *wifiManager;
 CDevice *device;
 
@@ -26,11 +24,13 @@ void setup() {
     Serial.begin(115200);  while (!Serial); delay(200);
     randomSeed(analogRead(0));
 
+    // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
     Log.begin(LOG_LEVEL_NOTICE, &Serial);
     Log.noticeln("Initializing...");  
 
+    pinMode(INTERNAL_LED_PIN, OUTPUT);
+
 #ifdef LED_PIN_BOARD
-    pinMode(LED_PIN_BOARD, OUTPUT);
     digitalWrite(LED_PIN_BOARD, HIGH);
 #endif
 
@@ -85,7 +85,7 @@ void loop() {
     if (millis() - tsMillis > 1000) {
         tsMillis = millis();
         ledOn = !ledOn;
-        digitalWrite(PIN_LED, ledOn ? HIGH : LOW);
+        digitalWrite(INTERNAL_LED_PIN, ledOn ? HIGH : LOW);
     }
 
     /*

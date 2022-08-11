@@ -7,6 +7,8 @@
 #include <Wire.h>
 #include <EEPROM.h>
 
+OneWire oneWire(TEMP_SENSOR_PIN);
+
 CDevice::CDevice() {
 
 #ifdef TEMP_SENSOR
@@ -14,7 +16,7 @@ sensorReady = true;
 tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
     DeviceAddress da;
-    _ds18b20 = new DS18B20(new OneWire(TEMP_SENSOR_PIN));
+    _ds18b20 = new DS18B20(&oneWire);
     _ds18b20->setConfig(DS18B20_CRC);
     _ds18b20->begin();
 
@@ -67,6 +69,8 @@ void CDevice::loop() {
                 _ds18b20->requestTemperatures();
                 tLastReading = millis();
                 Log.verboseln("DS18B20 temp: %FC %FF", _temperature, _temperature*1.8+32);
+            } else {
+                Log.verboseln("DS18B20 conversion not complete");
             }
         #endif
         #ifdef TEMP_SENSOR_BME280

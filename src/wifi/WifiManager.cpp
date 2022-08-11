@@ -157,6 +157,7 @@ void CWifiManager::listen() {
 
     // MQTT
     mqtt.setServer(configuration.mqttServer, configuration.mqttPort);
+    mqtt.setKeepAlive(60);
     if (strlen(configuration.mqttServer) && strlen(configuration.mqttTopic) && !mqtt.connected()) {
         Log.noticeln("Attempting MQTT connection to '%s:%i' ...", configuration.mqttServer, configuration.mqttPort);
         if (mqtt.connect("arduinoClient")) {
@@ -189,7 +190,7 @@ void CWifiManager::loop() {
       return;
     }
 
-    if (millis() - tMillis > 10000) {
+    if (millis() - tMillis > 30000) {
         tMillis = millis();
         postSensorUpdate();
     }
@@ -221,26 +222,29 @@ void CWifiManager::loop() {
 
 void CWifiManager::handleRoot(AsyncWebServerRequest *request) {
 
-  Log.infoln("handleRoot");
-  
-  int sec = millis() / 1000;
-  int min = sec / 60;
-  int hr = min / 60;
+    Log.infoln("handleRoot");
 
-  AsyncResponseStream *response = request->beginResponseStream("text/html");
-  response->printf(htmlTop.c_str(), configuration.name, configuration.name);
+    int sec = millis() / 1000;
+    int min = sec / 60;
+    int hr = min / 60;
 
-  if (apMode) {
-    response->printf(htmlWifiApConnectForm.c_str());
-  } else {
-    response->printf("<p>Connected to '%s'</p>", SSID);
-  }
-  
-  response->printf(htmlDeviceConfigs.c_str(), configuration.name, configuration.mqttServer, 
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+    response->printf(htmlTop.c_str(), configuration.name, configuration.name);
+
+    if (apMode) {
+        response->printf(htmlWifiApConnectForm.c_str());
+    } else {
+        response->printf("<p>Connected to '%s'</p>", SSID);
+    }
+
+    response->printf(htmlDeviceConfigs.c_str(), configuration.name, configuration.mqttServer, 
     configuration.mqttPort, configuration.mqttTopic);
 
-  response->printf(htmlBottom.c_str(), hr, min % 60, sec % 60, String(DEVICE_NAME), String("TODO"));
-  request->send(response);
+    bool c; float t = sensorProvider->getTemperature(&c);
+    char sensorStr[100];
+    sprintf(sensorStr, "Temp: %.2fF %s", (t*1.8+32), c ? "" : "(stale)");
+    response->printf(htmlBottom.c_str(), hr, min % 60, sec % 60, String(DEVICE_NAME), sensorStr);
+    request->send(response);
 }
 
 void CWifiManager::handleConnect(AsyncWebServerRequest *request) {
@@ -305,8 +309,20 @@ void CWifiManager::handleConfig(AsyncWebServerRequest *request) {
 void CWifiManager::postSensorUpdate() {
 #ifdef TEMP_SENSOR
     if (!mqtt.connected()) {
-        Log.verboseln("MQTT not connected");
-        return;
+        if (mqtt.state() < MQTT_CONNECTED 
+            && strlen(configuration.mqttServer) && strlen(configuration.mqttTopic)) { // Reconnectable
+            Log.noticeln("Attempting to reconnect from MQTT state %i at '%s:%i' ...", mqtt.state(), configuration.mqttServer, configuration.mqttPort);
+            if (mqtt.connect("arduinoClient")) {
+                Log.noticeln("MQTT reconnected");
+                postSensorUpdate();
+            } else {
+                Log.warningln("MQTT reconnect failed, rc=%i", mqtt.state());
+            }
+        }
+        if (!mqtt.connected()) {
+            Log.noticeln("MQTT not connected %i", mqtt.state());
+            return;
+        }
     }
 
     if (!strlen(configuration.mqttTopic)) {
