@@ -12,12 +12,12 @@
 #define EEPROM_FACTORY_RESET 0           // Byte to be used for factory reset device fails to start or is rebooted within 1 sec 3 consequitive times
 #define EEPROM_CONFIGURATION_START 1     // First EEPROM byte to be used for storing the configuration
 
-#define FACTORY_RESET_CLEAR_TIMER_MS 3000   // Clear factory reset counter when elapsed, considered smooth boot
+#define FACTORY_RESET_CLEAR_TIMER_MS 2000   // Clear factory reset counter when elapsed, considered smooth boot
 
 #ifdef ESP32
-  #define DEVICE_NAME "ESP32LED"
+  #define DEVICE_NAME "ESP32ST"
 #elif ESP8266
-  #define DEVICE_NAME "ESP8266LED"
+  #define DEVICE_NAME "ESP8266ST"
 #endif
 
 #ifdef WIFI
@@ -55,6 +55,8 @@
     //#define TEMP_SENSOR_BME280
     #define TEMP_SENSOR_PIN 4
 #endif
+
+#define BATTERY_SENSOR  // ADC A0 using 0-3.3v voltage divider
 
 #define INTERNAL_LED_PIN 2
 

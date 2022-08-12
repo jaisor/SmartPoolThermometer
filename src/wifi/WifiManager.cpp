@@ -86,7 +86,7 @@ const String htmlDeviceConfigs = "<hr><h2>Configs</h2>\
     </form>";
 
 CWifiManager::CWifiManager(ISensorProvider *sp): 
-apMode(false), rebootNeeded(false), sensorProvider(sp) {    
+apMode(false), rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp) {    
     strcpy(SSID, configuration.wifiSsid);
     server = new AsyncWebServer(WEB_SERVER_PORT);
     mqtt.setClient(espClient);
@@ -314,7 +314,6 @@ void CWifiManager::postSensorUpdate() {
             Log.noticeln("Attempting to reconnect from MQTT state %i at '%s:%i' ...", mqtt.state(), configuration.mqttServer, configuration.mqttPort);
             if (mqtt.connect("arduinoClient")) {
                 Log.noticeln("MQTT reconnected");
-                postSensorUpdate();
             } else {
                 Log.warningln("MQTT reconnect failed, rc=%i", mqtt.state());
             }
@@ -347,5 +346,16 @@ void CWifiManager::postSensorUpdate() {
         mqtt.publish(topic,String(v, 2).c_str());
         Log.noticeln("Sent '%F%' humidity to MQTT topic '%s'", v, topic);
     }
+
+    #ifdef BATTERY_SENSOR
+    v = sensorProvider->getBatteryVoltage(&current);
+    if (current) {
+        sprintf_P(topic, "%s/sensor/battery", configuration.mqttTopic);
+        mqtt.publish(topic,String(v, 2).c_str());
+        Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
+    }
+    #endif
+
+    postedSensorUpdate = true;
 #endif
 }

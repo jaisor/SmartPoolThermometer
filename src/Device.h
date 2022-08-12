@@ -32,6 +32,9 @@ public:
     virtual float getHumidity(bool *current);
     virtual float getAltitude(bool *current);
 #endif
+#ifdef BATTERY_SENSOR
+    virtual float getBatteryVoltage(bool *current) {  if (current != NULL) { *current = true; } return (float)analogRead(PIN_A0)/169.0; }
+#endif
 
 private:
     unsigned long tMillisMin;

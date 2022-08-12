@@ -15,11 +15,6 @@ CDevice *device;
 unsigned long tsSmoothBoot;
 bool smoothBoot;
 
-//EnergySaving pwrSave;
-//RTC_SAMD21 rtc;
-
-void dummyfunc() {}
-
 void setup() {
     Serial.begin(115200);  while (!Serial); delay(200);
     randomSeed(analogRead(0));
@@ -29,6 +24,7 @@ void setup() {
     Log.noticeln("Initializing...");  
 
     pinMode(INTERNAL_LED_PIN, OUTPUT);
+    digitalWrite(INTERNAL_LED_PIN, LOW);
 
 #ifdef LED_PIN_BOARD
     digitalWrite(LED_PIN_BOARD, HIGH);
@@ -66,8 +62,7 @@ void setup() {
 void loop() {
 
     static unsigned long tsMillis = millis();
-    static bool ledOn = false;
-
+    
     if (!smoothBoot && millis() - tsSmoothBoot > FACTORY_RESET_CLEAR_TIMER_MS) {
         smoothBoot = true;
         EEPROM_clearFactoryReset();
@@ -81,23 +76,17 @@ void loop() {
         return;
     }
     
-    
-    if (millis() - tsMillis > 1000) {
-        tsMillis = millis();
-        ledOn = !ledOn;
-        digitalWrite(INTERNAL_LED_PIN, ledOn ? HIGH : LOW);
+    // Conditions for deep sleep:
+    // - Smooth boot
+    // - Wifi not in AP mode
+    // - Succesfully submitted 1 sensor reading over MQTT
+    if (smoothBoot && wifiManager->isJobDone()) {
+        Log.noticeln("Ready to sleep!");
+        delay(300);
+        digitalWrite(INTERNAL_LED_PIN, HIGH);
+        ESP.deepSleep(60e6); 
     }
-
-    /*
     
-    if (tempSensor.isConversionComplete()) {
-        float t = tempSensor.getTempC();
-        Log.infoln("Temp: %FC %FF", t, t*1.8+32);
-        tempSensor.setResolution(12);
-        tempSensor.requestTemperatures();
-    }
-
-    */
-    
-    delay(1000);
+    delay(100);
+    yield();
 }

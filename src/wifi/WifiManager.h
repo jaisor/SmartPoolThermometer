@@ -28,6 +28,7 @@ private:
     char SSID[32];
     bool apMode;
     bool rebootNeeded;
+    bool postedSensorUpdate;
 
     AsyncWebServer* server;
     PubSubClient mqtt;
@@ -47,6 +48,7 @@ public:
     virtual void loop();
 
     bool isRebootNeeded() { return rebootNeeded; }
+    bool isJobDone() { return !apMode && postedSensorUpdate; }
 };
 
 #endif
