@@ -9,6 +9,8 @@
 #include "wifi/WifiManager.h"
 #include "Device.h"
 
+ADC_MODE(ADC_TOUT);
+
 CWifiManager *wifiManager;
 CDevice *device;
 
@@ -43,19 +45,6 @@ void setup() {
     device = new CDevice();
     wifiManager = new CWifiManager(device);
 
-    /*
-    rtc.adjust(DateTime(2030, 4, 1, 8, 30, 0) );
-    rtc.attachInterrupt(dummyfunc); 
-    pwrSave.begin(WAKE_RTC_ALARM); 
-
-    rtc.disableAlarm();
-    DateTime timeNow = rtc.now();
-    const uint16_t uiAlmNextSec = 10;
-    DateTime timeAlarm = DateTime(timeNow.year(), timeNow.month(), timeNow.day(), timeNow.hour(), timeNow.minute(), timeNow.second() + uiAlmNextSec);
-    rtc.setAlarm(timeAlarm);
-    rtc.enableAlarm(rtc.MATCH_SS); 
-    */
-
     Log.infoln("Initialized");
 }
 
@@ -82,9 +71,9 @@ void loop() {
     // - Succesfully submitted 1 sensor reading over MQTT
     if (smoothBoot && wifiManager->isJobDone()) {
         Log.noticeln("Ready to sleep!");
-        delay(300);
+        delay(200);
         digitalWrite(INTERNAL_LED_PIN, HIGH);
-        ESP.deepSleep(60e6); 
+        ESP.deepSleep(DEEP_SLEEP_INTERVAL_US); 
     }
     
     delay(100);

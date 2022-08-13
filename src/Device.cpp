@@ -93,6 +93,19 @@ float CDevice::getTemperature(bool *current) {
 }
 #endif
 
+float CDevice::getBatteryVoltage(bool *current) {  
+    if (current != NULL) { *current = true; } 
+    /*
+    uint16_t m = 0;
+    for (uint8_t i=0; i<10; i++) {
+        int v = analogRead(PIN_A0);
+        Log.notice("%i ", v);
+        m+=v;
+    }
+    */
+    return (float)analogRead(PIN_A0)/BATTERY_VOLTS_DIVIDER; 
+}
+
 #ifdef TEMP_SENSOR_BME280
 float CDevice::getHumidity(bool *current) const;
 float CDevice::getAltitude(bool *current) const;

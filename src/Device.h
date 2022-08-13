@@ -16,7 +16,7 @@
 #endif
 #endif
 
-#define STALE_READING_AGE_MS 3000
+#define STALE_READING_AGE_MS 10000 // 10 sec
 
 class CDevice: public ISensorProvider {
 
@@ -33,7 +33,7 @@ public:
     virtual float getAltitude(bool *current);
 #endif
 #ifdef BATTERY_SENSOR
-    virtual float getBatteryVoltage(bool *current) {  if (current != NULL) { *current = true; } return (float)analogRead(PIN_A0)/169.0; }
+    virtual float getBatteryVoltage(bool *current);
 #endif
 
 private:

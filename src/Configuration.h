@@ -60,6 +60,9 @@
 
 #define INTERNAL_LED_PIN 2
 
+#define DEEP_SLEEP_INTERVAL_US 300e6 // 5 min (300sec) // TODO: Make configurable
+#define BATTERY_VOLTS_DIVIDER 222.3 // 169.0 // TODO: Make configurable
+
 struct configuration_t {
 
     #ifdef WIFI

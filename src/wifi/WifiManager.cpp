@@ -356,6 +356,12 @@ void CWifiManager::postSensorUpdate() {
     }
     #endif
 
+    time_t now; 
+    time(&now);
+    sprintf_P(topic, "%s/sensor/timestamp", configuration.mqttTopic);
+    mqtt.publish(topic,String(now).c_str());
+    Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", now, topic);
+
     postedSensorUpdate = true;
 #endif
 }
