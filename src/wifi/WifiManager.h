@@ -29,6 +29,8 @@ private:
     bool apMode;
     bool rebootNeeded;
     bool postedSensorUpdate;
+    
+    float batteryVoltage;
 
     AsyncWebServer* server;
     PubSubClient mqtt;

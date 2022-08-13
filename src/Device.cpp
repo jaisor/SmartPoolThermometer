@@ -95,15 +95,9 @@ float CDevice::getTemperature(bool *current) {
 
 float CDevice::getBatteryVoltage(bool *current) {  
     if (current != NULL) { *current = true; } 
-    /*
-    uint16_t m = 0;
-    for (uint8_t i=0; i<10; i++) {
-        int v = analogRead(PIN_A0);
-        Log.notice("%i ", v);
-        m+=v;
-    }
-    */
-    return (float)analogRead(PIN_A0)/BATTERY_VOLTS_DIVIDER; 
+    int v = analogRead(PIN_A0);
+    Log.verboseln("Battery voltage: %i", v);
+    return (float)v/configuration.battVoltsDivider; 
 }
 
 #ifdef TEMP_SENSOR_BME280

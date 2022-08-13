@@ -19,9 +19,9 @@ bool smoothBoot;
 
 void setup() {
     Serial.begin(115200);  while (!Serial); delay(200);
-    randomSeed(analogRead(0));
+    //randomSeed(analogRead(0));
 
-    // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+    //Log.begin(LOG_LEVEL_VERBOSE, &Serial);
     Log.begin(LOG_LEVEL_NOTICE, &Serial);
     Log.noticeln("Initializing...");  
 
@@ -70,12 +70,12 @@ void loop() {
     // - Wifi not in AP mode
     // - Succesfully submitted 1 sensor reading over MQTT
     if (smoothBoot && wifiManager->isJobDone()) {
-        Log.noticeln("Ready to sleep!");
-        delay(200);
+        delay(100);
         digitalWrite(INTERNAL_LED_PIN, HIGH);
-        ESP.deepSleep(DEEP_SLEEP_INTERVAL_US); 
+        Log.noticeln("Initiating deep sleep for %u usec", configuration.deepSleepDurationSec );
+        ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6, WAKE_RF_DISABLED); 
     }
     
-    delay(100);
+    delay(500);
     yield();
 }
