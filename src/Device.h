@@ -46,6 +46,7 @@ private:
     
     float _temperature;
 #ifdef TEMP_SENSOR_DS18B20
+    OneWire *oneWire;
     DS18B20 *_ds18b20;
 #endif
 #ifdef TEMP_SENSOR_BME280

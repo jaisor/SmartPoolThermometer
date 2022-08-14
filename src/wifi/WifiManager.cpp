@@ -373,13 +373,19 @@ void CWifiManager::postSensorUpdate() {
     sprintf_P(topic, "%s/sensor/battery", configuration.mqttTopic);
     mqtt.publish(topic,String(v, 2).c_str());
     Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
+
+    int iv = analogRead(BATTERY_SENSOR_ADC_PIN);
+    sprintf_P(topic, "%s/sensor/adc_raw", configuration.mqttTopic);
+    mqtt.publish(topic,String(iv).c_str());
+    Log.noticeln("Sent '%i' raw ADC value to MQTT topic '%s'", iv, topic);
+
     #endif
 
     time_t now; 
     time(&now);
     sprintf_P(topic, "%s/sensor/timestamp", configuration.mqttTopic);
     mqtt.publish(topic,String(now).c_str());
-    Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", now, topic);
+    Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
 
     postedSensorUpdate = true;
 #endif

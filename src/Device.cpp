@@ -7,16 +7,15 @@
 #include <Wire.h>
 #include <EEPROM.h>
 
-OneWire oneWire(TEMP_SENSOR_PIN);
-
 CDevice::CDevice() {
 
 #ifdef TEMP_SENSOR
 sensorReady = true;
 tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
+    oneWire = new OneWire(TEMP_SENSOR_PIN);
     DeviceAddress da;
-    _ds18b20 = new DS18B20(&oneWire);
+    _ds18b20 = new DS18B20(oneWire);
     _ds18b20->setConfig(DS18B20_CRC);
     _ds18b20->begin();
 
