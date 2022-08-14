@@ -62,6 +62,9 @@ void EEPROM_loadConfig() {
       configuration.mqttPort = 1883;
       strcpy(configuration.mqttTopic, "");
     #endif
+
+    configuration.battVoltsDivider = BATTERY_VOLTS_DIVIDER;
+    configuration.deepSleepDurationSec = DEEP_SLEEP_INTERVAL_SEC;
   }
 
 #ifdef LED

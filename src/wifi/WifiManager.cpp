@@ -75,18 +75,28 @@ const String htmlDeviceConfigs = "<hr><h2>Configs</h2>\
       <label for='deviceName'>Device name:</label><br>\
       <input type='text' id='deviceName' name='deviceName' value='%s'><br>\
       <br>\
-      <label for='mqttServer'>MQTT Server:</label><br>\
+      <label for='mqttServer'>MQTT server:</label><br>\
       <input type='text' id='mqttServer' name='mqttServer' value='%s'><br>\
-      <label for='mqttPort'>MQTT Port:</label><br>\
-      <input type='text' id='mqttPort' name='mqttPort' value='%i'><br>\
-      <label for='mqttTopic'>MQTT Topic:</label><br>\
+      <label for='mqttPort'>MQTT port:</label><br>\
+      <input type='text' id='mqttPort' name='mqttPort' value='%u'><br>\
+      <label for='mqttTopic'>MQTT topic:</label><br>\
       <input type='text' id='mqttTopic' name='mqttTopic' value='%s'><br>\
+      <br>\
+      <label for='battVoltsDivider'>Battery volt measurement divider:</label><br>\
+      <input type='text' id='battVoltsDivider' name='battVoltsDivider' value='%.2f'><br>\
+      <br>\
+      <label for='deepSleepDurationSec'>Deep sleep cycle duration:</label><br>\
+      <input type='text' id='deepSleepDurationSec' name='deepSleepDurationSec' value='%u'> sec.<br>\
       <br>\
       <input type='submit' value='Set...'>\
     </form>";
 
 CWifiManager::CWifiManager(ISensorProvider *sp): 
 apMode(false), rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp) {    
+
+    // Start capturing voltage
+    batteryVoltage = sensorProvider->getBatteryVoltage(NULL);
+
     strcpy(SSID, configuration.wifiSsid);
     server = new AsyncWebServer(WEB_SERVER_PORT);
     mqtt.setClient(espClient);
@@ -171,6 +181,8 @@ void CWifiManager::listen() {
 
 void CWifiManager::loop() {
 
+    batteryVoltage = (float)(batteryVoltage + sensorProvider->getBatteryVoltage(NULL)) / 2.0;
+
   if (rebootNeeded && millis() - tMillis > 200) {
     Log.noticeln("Rebooting...");
 #ifdef ESP32
@@ -238,7 +250,8 @@ void CWifiManager::handleRoot(AsyncWebServerRequest *request) {
     }
 
     response->printf(htmlDeviceConfigs.c_str(), configuration.name, configuration.mqttServer, 
-    configuration.mqttPort, configuration.mqttTopic);
+    configuration.mqttPort, configuration.mqttTopic, 
+    configuration.battVoltsDivider, configuration.deepSleepDurationSec);
 
     bool c; float t = sensorProvider->getTemperature(&c);
     char sensorStr[100];
@@ -261,7 +274,7 @@ void CWifiManager::handleConnect(AsyncWebServerRequest *request) {
   AsyncResponseStream *response = request->beginResponseStream("text/html");
   response->printf(htmlTop.c_str(), configuration.name, configuration.name);
   response->printf("<p>Connecting to '%s' ... see you on the other side!</p>", ssid.c_str());
-  response->printf(htmlBottom.c_str(), hr, min % 60, sec % 60, String(DEVICE_NAME), String("TODO"));
+  response->printf(htmlBottom.c_str(), hr, min % 60, sec % 60, String(DEVICE_NAME), String(""));
   request->send(response);
 
   ssid.toCharArray(configuration.wifiSsid, sizeof(configuration.wifiSsid));
@@ -290,11 +303,19 @@ void CWifiManager::handleConfig(AsyncWebServerRequest *request) {
 
     uint16_t mqttPort = atoi(request->arg("mqttPort").c_str());
     configuration.mqttPort = mqttPort;
-    Log.infoln("MQTT Port: %i", mqttPort);
+    Log.infoln("MQTT Port: %u", mqttPort);
 
     String mqttTopic = request->arg("mqttTopic");
     mqttTopic.toCharArray(configuration.mqttTopic, sizeof(configuration.mqttTopic));
     Log.infoln("MQTT Topic: %s", mqttTopic);
+
+    uint16_t battVoltsDivider = atoi(request->arg("battVoltsDivider").c_str());
+    configuration.battVoltsDivider = battVoltsDivider;
+    Log.infoln("battVoltsDivider: %u", battVoltsDivider);
+
+    float deepSleepDurationSec = atof(request->arg("deepSleepDurationSec").c_str());
+    configuration.deepSleepDurationSec = deepSleepDurationSec;
+    Log.infoln("deepSleepDurationSec: %.2f", deepSleepDurationSec);
 
     EEPROM_saveConfig();
 
@@ -348,19 +369,23 @@ void CWifiManager::postSensorUpdate() {
     }
 
     #ifdef BATTERY_SENSOR
-    v = sensorProvider->getBatteryVoltage(&current);
-    if (current) {
-        sprintf_P(topic, "%s/sensor/battery", configuration.mqttTopic);
-        mqtt.publish(topic,String(v, 2).c_str());
-        Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
-    }
+    v = (float)(batteryVoltage + sensorProvider->getBatteryVoltage(NULL)) / 2.0;
+    sprintf_P(topic, "%s/sensor/battery", configuration.mqttTopic);
+    mqtt.publish(topic,String(v, 2).c_str());
+    Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
+
+    int iv = analogRead(BATTERY_SENSOR_ADC_PIN);
+    sprintf_P(topic, "%s/sensor/adc_raw", configuration.mqttTopic);
+    mqtt.publish(topic,String(iv).c_str());
+    Log.noticeln("Sent '%i' raw ADC value to MQTT topic '%s'", iv, topic);
+
     #endif
 
     time_t now; 
     time(&now);
     sprintf_P(topic, "%s/sensor/timestamp", configuration.mqttTopic);
     mqtt.publish(topic,String(now).c_str());
-    Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", now, topic);
+    Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
 
     postedSensorUpdate = true;
 #endif

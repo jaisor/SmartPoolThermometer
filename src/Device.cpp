@@ -7,16 +7,15 @@
 #include <Wire.h>
 #include <EEPROM.h>
 
-OneWire oneWire(TEMP_SENSOR_PIN);
-
 CDevice::CDevice() {
 
 #ifdef TEMP_SENSOR
 sensorReady = true;
 tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
+    oneWire = new OneWire(TEMP_SENSOR_PIN);
     DeviceAddress da;
-    _ds18b20 = new DS18B20(&oneWire);
+    _ds18b20 = new DS18B20(oneWire);
     _ds18b20->setConfig(DS18B20_CRC);
     _ds18b20->begin();
 
@@ -95,15 +94,9 @@ float CDevice::getTemperature(bool *current) {
 
 float CDevice::getBatteryVoltage(bool *current) {  
     if (current != NULL) { *current = true; } 
-    /*
-    uint16_t m = 0;
-    for (uint8_t i=0; i<10; i++) {
-        int v = analogRead(PIN_A0);
-        Log.notice("%i ", v);
-        m+=v;
-    }
-    */
-    return (float)analogRead(PIN_A0)/BATTERY_VOLTS_DIVIDER; 
+    int v = analogRead(BATTERY_SENSOR_ADC_PIN);
+    Log.verboseln("Battery voltage: %i", v);
+    return (float)v/configuration.battVoltsDivider; 
 }
 
 #ifdef TEMP_SENSOR_BME280

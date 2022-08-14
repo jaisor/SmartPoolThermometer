@@ -9,7 +9,10 @@
 #include "wifi/WifiManager.h"
 #include "Device.h"
 
-ADC_MODE(ADC_TOUT);
+#ifdef ESP32
+#elif ESP8266
+    ADC_MODE(ADC_TOUT);
+#endif
 
 CWifiManager *wifiManager;
 CDevice *device;
@@ -19,14 +22,19 @@ bool smoothBoot;
 
 void setup() {
     Serial.begin(115200);  while (!Serial); delay(200);
-    randomSeed(analogRead(0));
+    //randomSeed(analogRead(0));
 
-    // Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+    //Log.begin(LOG_LEVEL_VERBOSE, &Serial);
     Log.begin(LOG_LEVEL_NOTICE, &Serial);
     Log.noticeln("Initializing...");  
 
     pinMode(INTERNAL_LED_PIN, OUTPUT);
-    digitalWrite(INTERNAL_LED_PIN, LOW);
+    #ifdef ESP32
+        digitalWrite(INTERNAL_LED_PIN, HIGH);
+    #elif ESP8266
+        digitalWrite(INTERNAL_LED_PIN, LOW);
+    #endif
+    
 
 #ifdef LED_PIN_BOARD
     digitalWrite(LED_PIN_BOARD, HIGH);
@@ -70,12 +78,18 @@ void loop() {
     // - Wifi not in AP mode
     // - Succesfully submitted 1 sensor reading over MQTT
     if (smoothBoot && wifiManager->isJobDone()) {
-        Log.noticeln("Ready to sleep!");
-        delay(200);
-        digitalWrite(INTERNAL_LED_PIN, HIGH);
-        ESP.deepSleep(DEEP_SLEEP_INTERVAL_US); 
+        delay(100);
+        Log.noticeln("Initiating deep sleep for %u usec", configuration.deepSleepDurationSec );
+        #ifdef ESP32
+            digitalWrite(INTERNAL_LED_PIN, LOW);
+            ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6);
+        #elif ESP8266
+            digitalWrite(INTERNAL_LED_PIN, HIGH);
+            ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6, WAKE_RF_DISABLED); 
+        #endif
+        
     }
     
-    delay(100);
+    delay(500);
     yield();
 }
