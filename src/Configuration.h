@@ -57,6 +57,9 @@
 #endif
 
 #define BATTERY_SENSOR  // ADC A0 using 0-3.3v voltage divider
+#ifdef BATTERY_SENSOR
+    #define BATTERY_SENSOR_ADC_PIN  A0
+#endif
 
 #define INTERNAL_LED_PIN 2
 

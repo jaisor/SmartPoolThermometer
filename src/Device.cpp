@@ -95,7 +95,7 @@ float CDevice::getTemperature(bool *current) {
 
 float CDevice::getBatteryVoltage(bool *current) {  
     if (current != NULL) { *current = true; } 
-    int v = analogRead(PIN_A0);
+    int v = analogRead(BATTERY_SENSOR_ADC_PIN);
     Log.verboseln("Battery voltage: %i", v);
     return (float)v/configuration.battVoltsDivider; 
 }

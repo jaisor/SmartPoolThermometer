@@ -9,7 +9,10 @@
 #include "wifi/WifiManager.h"
 #include "Device.h"
 
-ADC_MODE(ADC_TOUT);
+#ifdef ESP32
+#elif ESP8266
+    ADC_MODE(ADC_TOUT);
+#endif
 
 CWifiManager *wifiManager;
 CDevice *device;
@@ -26,7 +29,12 @@ void setup() {
     Log.noticeln("Initializing...");  
 
     pinMode(INTERNAL_LED_PIN, OUTPUT);
-    digitalWrite(INTERNAL_LED_PIN, LOW);
+    #ifdef ESP32
+        digitalWrite(INTERNAL_LED_PIN, HIGH);
+    #elif ESP8266
+        digitalWrite(INTERNAL_LED_PIN, LOW);
+    #endif
+    
 
 #ifdef LED_PIN_BOARD
     digitalWrite(LED_PIN_BOARD, HIGH);
@@ -71,9 +79,15 @@ void loop() {
     // - Succesfully submitted 1 sensor reading over MQTT
     if (smoothBoot && wifiManager->isJobDone()) {
         delay(100);
-        digitalWrite(INTERNAL_LED_PIN, HIGH);
         Log.noticeln("Initiating deep sleep for %u usec", configuration.deepSleepDurationSec );
-        ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6, WAKE_RF_DISABLED); 
+        #ifdef ESP32
+            digitalWrite(INTERNAL_LED_PIN, LOW);
+            ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6);
+        #elif ESP8266
+            digitalWrite(INTERNAL_LED_PIN, HIGH);
+            ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6, WAKE_RF_DISABLED); 
+        #endif
+        
     }
     
     delay(500);
