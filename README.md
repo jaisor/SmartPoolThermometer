@@ -41,13 +41,70 @@ Recommended: [VSCode](https://code.visualstudio.com/) + [PlatformIO](https://pla
 
 ## Data visualization
 
+Useful articles and guides:
+* https://frederic-hemberger.de/notes/prometheus/monitoring-temperature-and-humidity-with-mqtt/
+* https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/
+* https://grafana.com/docs/grafana-cloud/quickstart/docker-compose-linux/
+
+The below instructions are better suited for Desktop (local) install. Server deployments should probably use a docker-compose, dedicated users, security, auth, backup and scaling considerations. 
+
 ### MQTT broker
+
+```
+```
+
+```
+docker run -dit \
+    --name=mqtt-mac \
+    --restart=unless-stopped \
+    -p 1883:1883 \
+    -v "$APPROPRIATE_VAR_PATH/mosquitto:/mosquitto" \
+    eclipse-mosquitto:latest
+```
 
 ### MQTT exporter
 
+```
+docker run -dit \
+  -v "$APPROPRIATE_VAR_PATH/prometheus/mqtt_exporter.yaml:/conf/mqtt_exporter.yaml:ro" \
+  -p "9344:9344" --name mqtt_exporter \
+    :latest -c /conf/mqtt_exporter.yaml
+```
+
 ### Prometehus
 
+`prometheus/config.yml`
+
+```
+scrape_configs:
+
+# Prometehus itself
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9090']
+
+# MQTT exporter
+  - job_name: 'mqtt'
+    scrape_interval: 30s
+    static_configs:
+    - targets: ['<HOSTNAME>.local:9344']
+```
+
+```
+docker run -dit --restart unless-stopped -p 9090:9090 \
+    --name prometheus-mac \
+    -v "$APPROPRIATE_VAR_PATH/prometheus:/data" \
+    prom/prometheus:latest \
+    --config.file="/data/config.yml" \
+    --storage.tsdb.path="/data/prometheus"
+```
+
 ### Grafana
+
+```
+docker run -dit --restart unless-stopped -p "3000:3000" --name grafana-mac grafana/grafana
+```
 
 ### Dashboard
 
