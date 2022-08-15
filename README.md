@@ -68,7 +68,7 @@ docker run -dit \
 docker run -dit \
   -v "$APPROPRIATE_VAR_PATH/prometheus/mqtt_exporter.yaml:/conf/mqtt_exporter.yaml:ro" \
   -p "9344:9344" --name mqtt_exporter \
-    :latest -c /conf/mqtt_exporter.yaml
+  fhemberger/mqtt_exporter:latest -c /conf/mqtt_exporter.yaml
 ```
 
 ### Prometehus
@@ -103,7 +103,7 @@ docker run -dit --restart unless-stopped -p 9090:9090 \
 ### Grafana
 
 ```
-docker run -dit --restart unless-stopped -p "3000:3000" --name grafana-mac grafana/grafana
+docker run -dit --restart unless-stopped -p "3000:3000" --name grafana-mac grafana/grafana:latest
 ```
 
 ### Dashboard
