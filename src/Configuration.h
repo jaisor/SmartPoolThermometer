@@ -53,7 +53,11 @@
 #ifdef TEMP_SENSOR
     #define TEMP_SENSOR_DS18B20
     //#define TEMP_SENSOR_BME280
-    #define TEMP_SENSOR_PIN D3
+    #ifdef ESP32
+        #define TEMP_SENSOR_PIN 0
+    #elif ESP8266
+        #define TEMP_SENSOR_PIN D3
+    #endif
 #endif
 
 #define BATTERY_SENSOR  // ADC A0 using 0-3.3v voltage divider
@@ -61,9 +65,9 @@
     #define BATTERY_SENSOR_ADC_PIN  A0
 #endif
 
-#define INTERNAL_LED_PIN D4
+#define INTERNAL_LED_PIN LED_BUILTIN
 
-#define DEEP_SLEEP_INTERVAL_SEC 300 // 5 min (300sec) 
+#define DEEP_SLEEP_INTERVAL_SEC 180 // 3 min (300sec) 
 #define BATTERY_VOLTS_DIVIDER 169.0 // 169.0 or 222.3 not sure why it flips
 
 struct configuration_t {
