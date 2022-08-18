@@ -54,6 +54,20 @@ CDevice::~CDevice() {
     Log.noticeln("Device destroyed");
 }
 
+uint32_t CDevice::getDeviceId() {
+      // Create AP using fallback and chip ID
+    uint32_t chipId = 0;
+    #ifdef ESP32
+      for(int i=0; i<17; i=i+8) {
+        chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+      }
+    #elif ESP8266
+      chipId = ESP.getChipId();
+    #endif
+
+    return chipId;
+}
+
 void CDevice::loop() {
 
     if (sensorReady && millis() - tMillisTemp > 1000) {

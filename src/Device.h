@@ -25,6 +25,8 @@ public:
     ~CDevice();
     void loop();
 
+    virtual uint32_t getDeviceId();
+
 #ifdef TEMP_SENSOR_DS18B20
     virtual float getTemperature(bool *current);
 #endif

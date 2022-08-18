@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <WiFiClient.h>
+#include <Time.h>
 #include <ezTime.h>
 #include <AsyncElegantOTA.h>
 
@@ -97,6 +98,10 @@ apMode(false), rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp
     // Start capturing voltage
     batteryVoltage = sensorProvider->getBatteryVoltage(NULL);
 
+    sensorJson["name"] = configuration.name;
+    sensorJson["sleep_sec"] = configuration.deepSleepDurationSec;
+    sensorJson["batt_adc_div"] = configuration.battVoltsDivider;
+
     strcpy(SSID, configuration.wifiSsid);
     server = new AsyncWebServer(WEB_SERVER_PORT);
     mqtt.setClient(espClient);
@@ -109,6 +114,10 @@ void CWifiManager::connect() {
   strcpy(softAP_SSID, "");
   tMillis = millis();
 
+  uint32_t deviceId = sensorProvider->getDeviceId();
+  sensorJson["device_id"] = deviceId;
+  Log.infoln("Device ID: '%i'", deviceId);
+
   if (strlen(SSID)) {
 
     // Join AP from Config
@@ -119,17 +128,7 @@ void CWifiManager::connect() {
   } else {
 
     // Create AP using fallback and chip ID
-    uint32_t chipId = 0;
-    #ifdef ESP32
-      for(int i=0; i<17; i=i+8) {
-        chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
-      }
-    #elif ESP8266
-      chipId = ESP.getChipId();
-    #endif
-  
-    Log.infoln("Chip ID: '%i'", chipId);
-    sprintf_P(softAP_SSID, "%s_%i", WIFI_FALLBACK_SSID, chipId);
+    sprintf_P(softAP_SSID, "%s_%i", WIFI_FALLBACK_SSID, deviceId);
     Log.infoln("Creating WiFi: '%s' / '%s'", softAP_SSID, WIFI_FALLBACK_PASS);
     
     if (WiFi.softAP(softAP_SSID, WIFI_FALLBACK_PASS)) {
@@ -153,6 +152,11 @@ void CWifiManager::listen() {
     server->on("/config", HTTP_POST, std::bind(&CWifiManager::handleConfig, this, std::placeholders::_1));
     server->begin();
     Log.infoln("Web server listening on %s port %i", WiFi.localIP().toString().c_str(), WEB_SERVER_PORT);
+    if (!apMode) {
+        sensorJson["ip"] = WiFi.localIP();
+    } else {
+        sensorJson.remove("ip");
+    }
 
     // NTP
     Log.infoln("Configuring time from %s at %i (%i)", configuration.ntpServer, configuration.gmtOffset_sec, configuration.daylightOffset_sec);
@@ -319,16 +323,12 @@ void CWifiManager::handleConfig(AsyncWebServerRequest *request) {
 
     EEPROM_saveConfig();
 
-    // TODO check if MQTT reconnect is needed
-    if (strlen(configuration.mqttServer) && strlen(configuration.mqttTopic)) {
-        rebootNeeded = true;
-    }
-
+    rebootNeeded = true;
     request->redirect("/");
 }
 
 void CWifiManager::postSensorUpdate() {
-#ifdef TEMP_SENSOR
+
     if (!mqtt.connected()) {
         if (mqtt.state() < MQTT_CONNECTED 
             && strlen(configuration.mqttServer) && strlen(configuration.mqttTopic)) { // Reconnectable
@@ -353,12 +353,14 @@ void CWifiManager::postSensorUpdate() {
     char topic[255];
     bool current;
     float v;
-    
+
+#ifdef TEMP_SENSOR    
     v = sensorProvider->getTemperature(&current);
     if (current) {
         sprintf_P(topic, "%s/sensor/temperature", configuration.mqttTopic);
         mqtt.publish(topic,String(v, 2).c_str());
         Log.noticeln("Sent '%FC' temp to MQTT topic '%s'", v, topic);
+        sensorJson["temp_c"] = v;
     }
 
     v = sensorProvider->getHumidity(&current);
@@ -366,20 +368,24 @@ void CWifiManager::postSensorUpdate() {
         sprintf_P(topic, "%s/sensor/humidity", configuration.mqttTopic);
         mqtt.publish(topic,String(v, 2).c_str());
         Log.noticeln("Sent '%F%' humidity to MQTT topic '%s'", v, topic);
+        sensorJson["humidity"] = v;
     }
+#endif
 
-    #ifdef BATTERY_SENSOR
+#ifdef BATTERY_SENSOR
     v = (float)(batteryVoltage + sensorProvider->getBatteryVoltage(NULL)) / 2.0;
     sprintf_P(topic, "%s/sensor/battery", configuration.mqttTopic);
     mqtt.publish(topic,String(v, 2).c_str());
     Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
+    sensorJson["battery_v"] = v;
 
     int iv = analogRead(BATTERY_SENSOR_ADC_PIN);
     sprintf_P(topic, "%s/sensor/adc_raw", configuration.mqttTopic);
     mqtt.publish(topic,String(iv).c_str());
     Log.noticeln("Sent '%i' raw ADC value to MQTT topic '%s'", iv, topic);
+    sensorJson["adc_raw"] = iv;
 
-    #endif
+#endif
 
     time_t now; 
     time(&now);
@@ -387,6 +393,17 @@ void CWifiManager::postSensorUpdate() {
     mqtt.publish(topic,String(now).c_str());
     Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
 
+    // Convert to ISO8601 for JSON
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+    sensorJson["timestamp"] = String(buf);
+
+    // sensor Json
+    String jsonStr;
+    serializeJson(sensorJson, jsonStr);
+    sprintf_P(topic, "%s/sensor/json", configuration.mqttTopic);
+    mqtt.publish(topic,jsonStr.c_str());
+    Log.noticeln("Sent '%s' json to MQTT topic '%s'", jsonStr.c_str(), topic);
+
     postedSensorUpdate = true;
-#endif
 }

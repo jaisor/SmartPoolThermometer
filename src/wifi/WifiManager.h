@@ -10,6 +10,7 @@
 #endif
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 #include "BaseManager.h"
 #include "wifi/SensorProvider.h"
@@ -35,6 +36,8 @@ private:
     AsyncWebServer* server;
     PubSubClient mqtt;
     ISensorProvider *sensorProvider;
+
+    StaticJsonDocument<1024> sensorJson;
 
     void connect();
     void listen();
