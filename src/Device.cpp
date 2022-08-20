@@ -9,9 +9,11 @@
 
 CDevice::CDevice() {
 
+    tMillisUp = millis();
+
 #ifdef TEMP_SENSOR
-sensorReady = true;
-tLastReading = 0;
+    sensorReady = true;
+    tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
     oneWire = new OneWire(TEMP_SENSOR_PIN);
     DeviceAddress da;

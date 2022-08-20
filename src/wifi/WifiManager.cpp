@@ -174,7 +174,7 @@ void CWifiManager::listen() {
     mqtt.setKeepAlive(60);
     if (strlen(configuration.mqttServer) && strlen(configuration.mqttTopic) && !mqtt.connected()) {
         Log.noticeln("Attempting MQTT connection to '%s:%i' ...", configuration.mqttServer, configuration.mqttPort);
-        if (mqtt.connect("arduinoClient")) {
+        if (mqtt.connect(String(sensorProvider->getDeviceId()).c_str())) {
             Log.noticeln("MQTT connected");
             postSensorUpdate();
         } else {
@@ -206,7 +206,7 @@ void CWifiManager::loop() {
       return;
     }
 
-    if (millis() - tMillis > 30000) {
+    if (!postedSensorUpdate || millis() - tMillis > 30000) {
         tMillis = millis();
         postSensorUpdate();
     }
@@ -333,7 +333,7 @@ void CWifiManager::postSensorUpdate() {
         if (mqtt.state() < MQTT_CONNECTED 
             && strlen(configuration.mqttServer) && strlen(configuration.mqttTopic)) { // Reconnectable
             Log.noticeln("Attempting to reconnect from MQTT state %i at '%s:%i' ...", mqtt.state(), configuration.mqttServer, configuration.mqttPort);
-            if (mqtt.connect("arduinoClient")) {
+            if (mqtt.connect(String(sensorProvider->getDeviceId()).c_str())) {
                 Log.noticeln("MQTT reconnected");
             } else {
                 Log.warningln("MQTT reconnect failed, rc=%i", mqtt.state());
@@ -392,6 +392,12 @@ void CWifiManager::postSensorUpdate() {
     sprintf_P(topic, "%s/sensor/timestamp", configuration.mqttTopic);
     mqtt.publish(topic,String(now).c_str());
     Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
+
+    unsigned long uptimeMillis = sensorProvider->getUptime();
+    sprintf_P(topic, "%s/sensor/uptime_millis", configuration.mqttTopic);
+    mqtt.publish(topic,String(uptimeMillis).c_str());
+    Log.noticeln("Sent '%ums' uptime to MQTT topic '%s'", uptimeMillis, topic);
+    sensorJson["uptime_millis"] = String(uptimeMillis);
 
     // Convert to ISO8601 for JSON
     char buf[sizeof "2011-10-08T07:07:09Z"];

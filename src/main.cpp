@@ -87,7 +87,15 @@ void loop() {
             digitalWrite(INTERNAL_LED_PIN, HIGH);
             ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6, WAKE_RF_DISABLED); 
         #endif
-        
+    }
+
+    if (device->getUptime() > configuration.deepSleepDurationSec * 10 * 1000) {
+        Log.noticeln("Device is not sleeping right, resetting to save battery");
+        #ifdef ESP32
+            ESP.restart();
+        #elif ESP8266
+            ESP.reset();
+        #endif
     }
     
     delay(500);
