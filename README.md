@@ -123,3 +123,4 @@ docker run -dit --restart unless-stopped -p "3000:3000" --name grafana-mac grafa
 
 ### Dashboard
 
+![Dash](/img/dash.png)
