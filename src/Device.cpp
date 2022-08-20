@@ -9,9 +9,11 @@
 
 CDevice::CDevice() {
 
+    tMillisUp = millis();
+
 #ifdef TEMP_SENSOR
-sensorReady = true;
-tLastReading = 0;
+    sensorReady = true;
+    tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
     oneWire = new OneWire(TEMP_SENSOR_PIN);
     DeviceAddress da;
@@ -52,6 +54,20 @@ CDevice::~CDevice() {
 #endif
 #endif
     Log.noticeln("Device destroyed");
+}
+
+uint32_t CDevice::getDeviceId() {
+      // Create AP using fallback and chip ID
+    uint32_t chipId = 0;
+    #ifdef ESP32
+      for(int i=0; i<17; i=i+8) {
+        chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+      }
+    #elif ESP8266
+      chipId = ESP.getChipId();
+    #endif
+
+    return chipId;
 }
 
 void CDevice::loop() {

@@ -25,6 +25,9 @@ public:
     ~CDevice();
     void loop();
 
+    virtual uint32_t getDeviceId();
+    virtual unsigned long getUptime() { return millis() - tMillisUp; };
+
 #ifdef TEMP_SENSOR_DS18B20
     virtual float getTemperature(bool *current);
 #endif
@@ -37,7 +40,7 @@ public:
 #endif
 
 private:
-    unsigned long tMillisMin;
+    unsigned long tMillisUp;
 
 #ifdef TEMP_SENSOR
     unsigned long tMillisTemp;
