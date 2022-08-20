@@ -32,12 +32,27 @@ Recommended: [VSCode](https://code.visualstudio.com/) + [PlatformIO](https://pla
 * [JST Connectors](https://www.amazon.com/dp/B071XN7C43)
 * [TP4056 Battery Charger Module](https://www.amazon.com/dp/B098989NRZ)
 * [Prototype board (optional)](https://www.amazon.com/dp/B00FXHXT80)
+* [M3 3D Printing Brass Nuts, 5mm x 6mm](https://www.amazon.com/dp/B09KZSJS88)
+* [M3 6mm Button](https://www.amazon.com/dp/B083HCLFM1)
 
 ### Schematic 
 
 ![Schematic](/img/schematic.png)
+![Board](/img/board.jpg)
 
 ### Enclosure 
+
+![Case](/img/case.png)
+
+All parts print without support in the default orientation. White PETG or something heat/uv resistent is recommended for the Box and Lid. The Gasket should be printed from something flexible like TPU.
+
+* [Box](stl/box.stl)
+* [Lid](stl/lid.stl)
+* [Gasket](stl/gasket.stl)
+
+Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with apropriate waterproof sealer / adhesive.
+The solar panels should be glued and then water proof sealed too.
+The linked prototype board fits inside well and can be screwed with some 1mm screws or glued or taped down.
 
 ## Data visualization
 
@@ -108,3 +123,4 @@ docker run -dit --restart unless-stopped -p "3000:3000" --name grafana-mac grafa
 
 ### Dashboard
 
+![Dash](/img/dash.png)
