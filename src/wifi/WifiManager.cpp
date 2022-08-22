@@ -399,12 +399,15 @@ void CWifiManager::postSensorUpdate() {
     mqtt.publish(topic,String(now).c_str());
     Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
 
+    sprintf_P(topic, "%s/sensor/apmode", configuration.mqttTopic);
+    mqtt.publish(topic,String(apMode).c_str());
+    Log.noticeln("Sent '%i' AP mode to MQTT topic '%s'", apMode, topic);
+
     unsigned long uptimeMillis = sensorProvider->getUptime();
     sprintf_P(topic, "%s/sensor/uptime_millis", configuration.mqttTopic);
     mqtt.publish(topic,String(uptimeMillis).c_str());
     Log.noticeln("Sent '%ums' uptime to MQTT topic '%s'", uptimeMillis, topic);
     sensorJson["uptime_millis"] = uptimeMillis;
-    sensorJson["reset_needed"] = sensorProvider->getUptime() > configuration.deepSleepDurationSec * 60 * 1000;
 
     // Convert to ISO8601 for JSON
     char buf[sizeof "2011-10-08T07:07:09Z"];
