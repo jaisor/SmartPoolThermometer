@@ -7,6 +7,7 @@
 #include <Time.h>
 #include <ezTime.h>
 #include <AsyncElegantOTA.h>
+#include <StreamUtils.h>
 
 #include "wifi/WifiManager.h"
 #include "Configuration.h"
@@ -110,33 +111,34 @@ apMode(false), rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp
 
 void CWifiManager::connect() {
 
-  status = WF_CONNECTING;
-  strcpy(softAP_SSID, "");
-  tMillis = millis();
+    status = WF_CONNECTING;
+    strcpy(softAP_SSID, "");
+    tMillis = millis();
 
-  uint32_t deviceId = sensorProvider->getDeviceId();
-  sensorJson["device_id"] = deviceId;
-  Log.infoln("Device ID: '%i'", deviceId);
+    uint32_t deviceId = sensorProvider->getDeviceId();
+    sensorJson["device_id"] = deviceId;
+    Log.infoln("Device ID: '%i'", deviceId);
 
-  if (strlen(SSID)) {
+    if (strlen(SSID)) {
 
-    // Join AP from Config
-    Log.infoln("Connecting to WiFi: '%s'", SSID);
-    WiFi.begin(SSID, configuration.wifiPassword);
-    apMode = false;
-    
-  } else {
+        // Join AP from Config
+        Log.infoln("Connecting to WiFi: '%s'", SSID);
+        WiFi.begin(SSID, configuration.wifiPassword);
+        apMode = false;
 
-    // Create AP using fallback and chip ID
-    sprintf_P(softAP_SSID, "%s_%i", WIFI_FALLBACK_SSID, deviceId);
-    Log.infoln("Creating WiFi: '%s' / '%s'", softAP_SSID, WIFI_FALLBACK_PASS);
-    
-    if (WiFi.softAP(softAP_SSID, WIFI_FALLBACK_PASS)) {
-      apMode = true;
-      Log.infoln("Wifi AP '%s' created, listening on '%s'", softAP_SSID, WiFi.softAPIP().toString().c_str());
     } else {
-      Log.errorln("Wifi AP faliled");
-    };
+
+        // Create AP using fallback and chip ID
+        sprintf_P(softAP_SSID, "%s_%i", WIFI_FALLBACK_SSID, deviceId);
+        Log.infoln("Creating WiFi: '%s' / '%s'", softAP_SSID, WIFI_FALLBACK_PASS);
+
+        if (WiFi.softAP(softAP_SSID, WIFI_FALLBACK_PASS)) {
+            apMode = true;
+            Log.infoln("Wifi AP '%s' created, listening on '%s'", softAP_SSID, WiFi.softAPIP().toString().c_str());
+        } else {
+            apMode = false;
+            Log.errorln("Wifi AP faliled");
+        };
 
   }
   
@@ -154,6 +156,8 @@ void CWifiManager::listen() {
     Log.infoln("Web server listening on %s port %i", WiFi.localIP().toString().c_str(), WEB_SERVER_PORT);
     if (!apMode) {
         sensorJson["ip"] = WiFi.localIP();
+        sensorJson["wifi_rssi"] = WiFi.RSSI();
+        sensorJson["wifi_percent"] = dBmtoPercentage(WiFi.RSSI());
     } else {
         sensorJson.remove("ip");
     }
@@ -206,7 +210,7 @@ void CWifiManager::loop() {
       return;
     }
 
-    if (!postedSensorUpdate || millis() - tMillis > 30000) {
+    if (millis() - tMillis > (postedSensorUpdate || apMode ? 30000 : 1000)) {
         tMillis = millis();
         postSensorUpdate();
     }
@@ -387,29 +391,42 @@ void CWifiManager::postSensorUpdate() {
 
 #endif
 
+    postedSensorUpdate = true;
+
     time_t now; 
     time(&now);
     sprintf_P(topic, "%s/sensor/timestamp", configuration.mqttTopic);
     mqtt.publish(topic,String(now).c_str());
     Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
 
+    sprintf_P(topic, "%s/sensor/apmode", configuration.mqttTopic);
+    mqtt.publish(topic,String(apMode).c_str());
+    Log.noticeln("Sent '%i' AP mode to MQTT topic '%s'", apMode, topic);
+
     unsigned long uptimeMillis = sensorProvider->getUptime();
     sprintf_P(topic, "%s/sensor/uptime_millis", configuration.mqttTopic);
     mqtt.publish(topic,String(uptimeMillis).c_str());
     Log.noticeln("Sent '%ums' uptime to MQTT topic '%s'", uptimeMillis, topic);
-    sensorJson["uptime_millis"] = String(uptimeMillis);
+    sensorJson["uptime_millis"] = uptimeMillis;
 
     // Convert to ISO8601 for JSON
     char buf[sizeof "2011-10-08T07:07:09Z"];
     strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
     sensorJson["timestamp"] = String(buf);
 
+    sensorJson["jobDone"] = isJobDone();
+    sensorJson["apMode"] = apMode;
+    sensorJson["postedSensorUpdate"] = postedSensorUpdate;
+
     // sensor Json
+    sprintf_P(topic, "%s/sensor/json", configuration.mqttTopic);
+    mqtt.beginPublish(topic, measureJson(sensorJson), false);
+    BufferingPrint bufferedClient(mqtt, 32);
+    serializeJson(sensorJson, bufferedClient);
+    bufferedClient.flush();
+    mqtt.endPublish();
+
     String jsonStr;
     serializeJson(sensorJson, jsonStr);
-    sprintf_P(topic, "%s/sensor/json", configuration.mqttTopic);
-    mqtt.publish(topic,jsonStr.c_str());
     Log.noticeln("Sent '%s' json to MQTT topic '%s'", jsonStr.c_str(), topic);
-
-    postedSensorUpdate = true;
 }

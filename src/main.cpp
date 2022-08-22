@@ -22,7 +22,7 @@ bool smoothBoot;
 
 void setup() {
     Serial.begin(115200);  while (!Serial); delay(200);
-    //randomSeed(analogRead(0));
+    randomSeed(analogRead(0));
 
     //Log.begin(LOG_LEVEL_VERBOSE, &Serial);
     Log.begin(LOG_LEVEL_NOTICE, &Serial);
@@ -85,11 +85,11 @@ void loop() {
             ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6);
         #elif ESP8266
             digitalWrite(INTERNAL_LED_PIN, HIGH);
-            ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6, WAKE_RF_DISABLED); 
+            ESP.deepSleep((uint64_t)configuration.deepSleepDurationSec * 1e6); 
         #endif
     }
 
-    if (device->getUptime() > configuration.deepSleepDurationSec * 10 * 1000) {
+    if (device->getUptime() > configuration.deepSleepDurationSec * 1000) {
         Log.noticeln("Device is not sleeping right, resetting to save battery");
         #ifdef ESP32
             ESP.restart();

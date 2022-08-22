@@ -37,7 +37,7 @@ private:
     PubSubClient mqtt;
     ISensorProvider *sensorProvider;
 
-    StaticJsonDocument<1024> sensorJson;
+    StaticJsonDocument<4096> sensorJson;
 
     void connect();
     void listen();
