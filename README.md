@@ -8,13 +8,14 @@
 * Floating water-tight pool sensor
 * Temperature and other telemetry (internal battery voltage) readings submitted over Wifi via MQTT at reasonable intervals (~5min)
 * Low power consumption, battery powered with solar recharge during the day 
-* Sensor initial configuration via self-hosted AP (`ESP8266ST_XXXXX` / `password123`) / IP (`192.168.4.1`)
-* Sensor resettable to defaults by 3 power-cycles within 2 seconds of boot
-* Data visualization - MQTT - Prpmetheus - Grafana dashboard
+* Device initial configuration via self-hosted AP (`ESP8266ST_XXXXX` / `password123`) / IP (`192.168.4.1`)
+* Device resets to (factory) defaults by 3 power-cycles within 2 seconds of boot
+* Device configurable over MQTT and capable of OTA firmware updates
+* Data visualization - MQTT - Prometheus - Grafana dashboard
 
 ## Notes
 
-Code is compatible with both ESP8266 and ESP32 boards, but ESP8266 draws signifficantly less power (4mA) during deep sleep
+Code is compatible with both ESP8266 and ESP32 boards, but ESP8266 draws significantly less power (4mA) during deep sleep
 
 ## Sensor
 
@@ -47,13 +48,13 @@ Recommended: [VSCode](https://code.visualstudio.com/) + [PlatformIO](https://pla
 
 ![Case](/img/case.png)
 
-All parts print without support in the default orientation. White PETG or something heat/uv resistent is recommended for the Box and Lid. The Gasket should be printed from something flexible like TPU.
+All parts print without support in the default orientation. White PETG or something heat/uv resistant is recommended for the Box and Lid. The Gasket should be printed from something flexible like TPU.
 
 * [Box](stl/box.stl)
 * [Lid](stl/lid.stl)
 * [Gasket](stl/gasket.stl)
 
-Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with apropriate waterproof sealer / adhesive.
+Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with appropriate waterproof sealer / adhesive.
 The solar panels should be glued and then water proof sealed too.
 The linked prototype board fits inside well and can be screwed with some 1mm screws or glued or taped down.
 
@@ -64,7 +65,7 @@ Useful articles and guides:
 * https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/
 * https://grafana.com/docs/grafana-cloud/quickstart/docker-compose-linux/
 
-The below instructions are better suited for Desktop (local) install. Server deployments should probably use a docker-compose, dedicated users, security, auth, backup and scaling considerations. 
+The following instructions are better suited for a "local" install - desktop, raspberry pi, server on LAN. Deployments expected to communicate over public internet should use appropriate encryption and authentication configuration. Large-scale deployments might also want to leverage a docker-compose, Terraform, etc. 
 
 ### MQTT broker
 
