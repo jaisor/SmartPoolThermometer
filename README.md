@@ -1,5 +1,8 @@
 # Smart Pool Thermometer
 
+![Dash](/img/dash.png)
+![PoolPhoto](/img/photo_pool.jpg)
+
 ## Requirements
 
 * Floating water-tight pool sensor
