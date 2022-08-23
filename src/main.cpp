@@ -19,6 +19,7 @@ CDevice *device;
 
 unsigned long tsSmoothBoot;
 bool smoothBoot;
+unsigned long tsMillisBooted;
 
 void setup() {
     Serial.begin(115200);  while (!Serial); delay(200);
@@ -57,12 +58,11 @@ void setup() {
 }
 
 void loop() {
-
-    static unsigned long tsMillis = millis();
     
     if (!smoothBoot && millis() - tsSmoothBoot > FACTORY_RESET_CLEAR_TIMER_MS) {
         smoothBoot = true;
         EEPROM_clearFactoryReset();
+        tsMillisBooted = millis();
         Log.noticeln("Device booted smoothly!");
     }
 
@@ -74,10 +74,14 @@ void loop() {
     }
     
     // Conditions for deep sleep:
+    // - Min time elapsed since smooth boot (to catch up on any MQTT messages)
     // - Smooth boot
     // - Wifi not in AP mode
     // - Succesfully submitted 1 sensor reading over MQTT
-    if (smoothBoot && wifiManager->isJobDone()) {
+    if (smoothBoot 
+        && configuration.deepSleepDurationSec > 0 
+        && millis() - tsMillisBooted > DEEP_SLEEP_MIN_AWAKE_MS
+        && wifiManager->isJobDone() ) {
         delay(100);
         Log.noticeln("Initiating deep sleep for %u usec", configuration.deepSleepDurationSec );
         #ifdef ESP32
@@ -89,7 +93,7 @@ void loop() {
         #endif
     }
 
-    if (device->getUptime() > configuration.deepSleepDurationSec * 1000) {
+    if (configuration.deepSleepDurationSec > 0 && device->getUptime() > configuration.deepSleepDurationSec * 1000) {
         Log.noticeln("Device is not sleeping right, resetting to save battery");
         #ifdef ESP32
             ESP.restart();
@@ -98,6 +102,6 @@ void loop() {
         #endif
     }
     
-    delay(500);
+    delay(200);
     yield();
 }

@@ -27,7 +27,7 @@ private:
     wifi_status status;
     char softAP_SSID[32];
     char SSID[32];
-    bool apMode;
+    char mqttSubcribeTopicConfig[255];
     bool rebootNeeded;
     bool postedSensorUpdate;
     
@@ -37,7 +37,8 @@ private:
     PubSubClient mqtt;
     ISensorProvider *sensorProvider;
 
-    StaticJsonDocument<4096> sensorJson;
+    StaticJsonDocument<2048> sensorJson;
+    StaticJsonDocument<2048> configJson;
 
     void connect();
     void listen();
@@ -47,13 +48,16 @@ private:
     void handleConfig(AsyncWebServerRequest *request);
 
     void postSensorUpdate();
+    bool isApMode();
+
+    void mqttCallback(char *topic, uint8_t *payload, unsigned int);
         
 public:
 	CWifiManager(ISensorProvider *sp);
     virtual void loop();
 
     bool isRebootNeeded() { return rebootNeeded; }
-    bool isJobDone() { return !apMode && postedSensorUpdate; }
+    bool isJobDone() { return !isApMode() && postedSensorUpdate; }
 };
 
 #endif

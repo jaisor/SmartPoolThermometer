@@ -67,8 +67,9 @@
 
 #define INTERNAL_LED_PIN LED_BUILTIN
 
-#define DEEP_SLEEP_INTERVAL_SEC 180 // 3 min (300sec) 
+#define DEEP_SLEEP_INTERVAL_SEC 180 // 3 min
 #define BATTERY_VOLTS_DIVIDER 169.0 // 169.0 or 222.3 not sure why it flips
+#define DEEP_SLEEP_MIN_AWAKE_MS 5000 // Minimum time to remain awake after smooth boot
 
 struct configuration_t {
 
