@@ -27,7 +27,7 @@ private:
     wifi_status status;
     char softAP_SSID[32];
     char SSID[32];
-    char mqttSuncribeTopicConfig[255];
+    char mqttSubcribeTopicConfig[255];
     bool rebootNeeded;
     bool postedSensorUpdate;
     
@@ -37,8 +37,8 @@ private:
     PubSubClient mqtt;
     ISensorProvider *sensorProvider;
 
-    StaticJsonDocument<1024> sensorJson;
-    StaticJsonDocument<1024> configJson;
+    StaticJsonDocument<2048> sensorJson;
+    StaticJsonDocument<2048> configJson;
 
     void connect();
     void listen();

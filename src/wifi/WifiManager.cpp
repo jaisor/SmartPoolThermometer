@@ -183,9 +183,9 @@ void CWifiManager::listen() {
         if (mqtt.connect(String(sensorProvider->getDeviceId()).c_str())) {
             Log.noticeln("MQTT connected");
             
-            sprintf_P(mqttSuncribeTopicConfig, "%s/%u/config", configuration.mqttTopic, sensorProvider->getDeviceId());
-            bool r = mqtt.subscribe(mqttSuncribeTopicConfig);
-            Log.noticeln("Subscribed for config changes to MQTT topic '%s' success = %T", mqttSuncribeTopicConfig, r);
+            sprintf_P(mqttSubcribeTopicConfig, "%s/%u/config", configuration.mqttTopic, sensorProvider->getDeviceId());
+            bool r = mqtt.subscribe(mqttSubcribeTopicConfig);
+            Log.noticeln("Subscribed for config changes to MQTT topic '%s' success = %T", mqttSubcribeTopicConfig, r);
 
             postSensorUpdate();
         } else {
@@ -236,7 +236,7 @@ void CWifiManager::loop() {
       } break;
       case WF_CONNECTING: {
         if (millis() - tMillis > MAX_CONNECT_TIMEOUT_MS) {
-          Log.warning("Connecting failed (wifi status %i) after %l ms, create an AP instead", (millis() - tMillis), WiFi.status());
+          Log.warning("Connecting failed (wifi status %u) after %u ms, create an AP instead", WiFi.status(), (millis() - tMillis));
           tMillis = millis();
           strcpy(SSID, "");
           connect();
@@ -349,9 +349,9 @@ void CWifiManager::postSensorUpdate() {
             Log.noticeln("Attempting to reconnect from MQTT state %i at '%s:%i' ...", mqtt.state(), configuration.mqttServer, configuration.mqttPort);
             if (mqtt.connect(String(sensorProvider->getDeviceId()).c_str())) {
                 Log.noticeln("MQTT reconnected");
-                sprintf_P(mqttSuncribeTopicConfig, "%s/%u/config", configuration.mqttTopic, sensorProvider->getDeviceId());
-                bool r = mqtt.subscribe(mqttSuncribeTopicConfig);
-                Log.noticeln("Subscribed for config changes to MQTT topic '%s' success = %T", mqttSuncribeTopicConfig, r);
+                sprintf_P(mqttSubcribeTopicConfig, "%s/%u/config", configuration.mqttTopic, sensorProvider->getDeviceId());
+                bool r = mqtt.subscribe(mqttSubcribeTopicConfig);
+                Log.noticeln("Subscribed for config changes to MQTT topic '%s' success = %T", mqttSubcribeTopicConfig, r);
             } else {
                 Log.warningln("MQTT reconnect failed, rc=%i", mqtt.state());
             }
@@ -430,6 +430,7 @@ void CWifiManager::postSensorUpdate() {
     sensorJson["jobDone"] = isJobDone();
     sensorJson["apMode"] = isApMode();
     sensorJson["postedSensorUpdate"] = postedSensorUpdate;
+    sensorJson["mqttConfigTopic"] = mqttSubcribeTopicConfig;
 
     // sensor Json
     sprintf_P(topic, "%s/sensor/json", configuration.mqttTopic);
@@ -450,21 +451,40 @@ bool CWifiManager::isApMode() {
 
 void CWifiManager::mqttCallback(char *topic, uint8_t *payload, unsigned int length) {
 
-    //payload[length] = 0;
-    //String recv_payload = String(( char *) payload)
-    /*
-    byte* p = (byte*)malloc(length);
-    memcpy(p,payload,length);
-    free(p);
-    */
+    if (length == 0) {
+        return;
+    }
 
     Log.noticeln("Received %u bytes message on MQTT topic '%s'", length, topic);
-    if (!strcmp(topic, mqttSuncribeTopicConfig)) {
+    if (!strcmp(topic, mqttSubcribeTopicConfig)) {
         deserializeJson(configJson, (const byte*)payload, length);
+
         String jsonStr;
         serializeJson(configJson, jsonStr);
-        Log.noticeln("Received configuration over MQTT with json: '%s'", length, jsonStr.c_str());
+        Log.noticeln("Received configuration over MQTT with json: '%s'", jsonStr.c_str());
+
+        if (configJson.containsKey("sleep_sec")) {
+            configuration.deepSleepDurationSec = configJson["sleep_sec"].as<uint16_t>();
+        }
+
+        if (configJson.containsKey("batt_adc_div")) {
+            configuration.battVoltsDivider = configJson["batt_adc_div"].as<float>();
+        }
+
+        if (configJson.containsKey("name")) {
+            strncpy(configuration.name, configJson["name"], 128);
+        }
+
+        if (configJson.containsKey("mqttTopic")) {
+            strncpy(configuration.mqttTopic, configJson["mqttTopic"], 64);
+        }
+
+        // Delete the config message in case it was retained
+        mqtt.publish(mqttSubcribeTopicConfig, NULL, 0, true);
+        Log.noticeln("Deleted config message");
+
+        EEPROM_saveConfig();
+        postSensorUpdate();
     }
-    
     
 }
