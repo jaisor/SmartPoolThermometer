@@ -67,8 +67,8 @@
 
 #define INTERNAL_LED_PIN LED_BUILTIN
 
-#define DEEP_SLEEP_INTERVAL_SEC 180 // 3 min (300sec) 
-#define BATTERY_VOLTS_DIVIDER 169.0 // 169.0 or 222.3 not sure why it flips
+#define DEEP_SLEEP_INTERVAL_SEC 300 // 5 min (300sec) 
+#define BATTERY_VOLTS_DIVIDER 162.3 // 169.0 or 222.3 not sure why it flips
 
 struct configuration_t {
 
@@ -97,7 +97,7 @@ struct configuration_t {
 
     char name[128];
     float battVoltsDivider;
-    uint16_t deepSleepDurationSec;
+    uint16_t deepSleepDurationSec; // 0 - deep sleep disabled, stay awake
 
     char _loaded[7]; // used to check if EEPROM was correctly set
     

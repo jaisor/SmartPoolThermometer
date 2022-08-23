@@ -77,7 +77,7 @@ void loop() {
     // - Smooth boot
     // - Wifi not in AP mode
     // - Succesfully submitted 1 sensor reading over MQTT
-    if (smoothBoot && wifiManager->isJobDone()) {
+    if (smoothBoot && configuration.deepSleepDurationSec > 0 && wifiManager->isJobDone()) {
         delay(100);
         Log.noticeln("Initiating deep sleep for %u usec", configuration.deepSleepDurationSec );
         #ifdef ESP32
@@ -89,7 +89,7 @@ void loop() {
         #endif
     }
 
-    if (device->getUptime() > configuration.deepSleepDurationSec * 1000) {
+    if (configuration.deepSleepDurationSec > 0 && device->getUptime() > configuration.deepSleepDurationSec * 1000) {
         Log.noticeln("Device is not sleeping right, resetting to save battery");
         #ifdef ESP32
             ESP.restart();
@@ -98,6 +98,6 @@ void loop() {
         #endif
     }
     
-    delay(500);
+    delay(200);
     yield();
 }
