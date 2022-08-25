@@ -55,15 +55,16 @@ const String htmlTop = "<html>\
     </style>\
   </head>\
   <body>\
-    <h1>%s LED Controller</h1>";
+    <h1>%s - Smart Pool Thermometer</h1>%s";
 
 const String htmlBottom = "<br><br><hr>\
-  <p>Uptime: %02d:%02d:%02d | Device: %s</p>\
-  %s\
-  </body>\
+  <p><b>%s</b><br>\
+    Uptime: <b>%02d:%02d:%02d</b><br>\
+    WiFi Signal Strength: <b>%i%%</b>\
+  </p></body>\
 </html>";
 
-const String htmlWifiApConnectForm = "<h2>Connect to WiFi Access Point (AP)</h2>\
+const String htmlWifiApConnectForm = "<hr><h2>Connect to WiFi Access Point (AP)</h2>\
     <form method='POST' action='/connect' enctype='application/x-www-form-urlencoded'>\
       <label for='ssid'>SSID (AP Name):</label><br>\
       <input type='text' id='ssid' name='ssid'><br><br>\
@@ -154,10 +155,6 @@ void CWifiManager::listen() {
     Log.infoln("Web server listening on %s port %i", WiFi.localIP().toString().c_str(), WEB_SERVER_PORT);
     
     sensorJson["ip"] = WiFi.localIP();
-    if (!isApMode()) {
-        sensorJson["wifi_rssi"] = WiFi.RSSI();
-        sensorJson["wifi_percent"] = dBmtoPercentage(WiFi.RSSI());
-    }
 
     // NTP
     Log.infoln("Configuring time from %s at %i (%i)", configuration.ntpServer, configuration.gmtOffset_sec, configuration.daylightOffset_sec);
@@ -253,12 +250,8 @@ void CWifiManager::handleRoot(AsyncWebServerRequest *request) {
 
     Log.infoln("handleRoot");
 
-    int sec = millis() / 1000;
-    int min = sec / 60;
-    int hr = min / 60;
-
     AsyncResponseStream *response = request->beginResponseStream("text/html");
-    response->printf(htmlTop.c_str(), configuration.name, configuration.name);
+    printHTMLTop(response);
 
     if (isApMode()) {
         response->printf(htmlWifiApConnectForm.c_str());
@@ -270,11 +263,7 @@ void CWifiManager::handleRoot(AsyncWebServerRequest *request) {
     configuration.mqttPort, configuration.mqttTopic, 
     configuration.battVoltsDivider, configuration.deepSleepDurationSec);
 
-    bool ct; float t = sensorProvider->getTemperature(&ct);
-    bool cb; float b = sensorProvider->getBatteryVoltage(&cb);
-    char sensorStr[100];
-    sprintf(sensorStr, "Temp: %.2fF%s; Battery: %.2fv%s;", (t*1.8+32), ct ? "" : " (stale)", b, cb ? "" : " (stale)");
-    response->printf(htmlBottom.c_str(), hr, min % 60, sec % 60, String(DEVICE_NAME), sensorStr);
+    printHTMLBottom(response);
     request->send(response);
 }
 
@@ -285,14 +274,12 @@ void CWifiManager::handleConnect(AsyncWebServerRequest *request) {
   String ssid = request->arg("ssid");
   String password = request->arg("password");
   
-  int sec = millis() / 1000;
-  int min = sec / 60;
-  int hr = min / 60;
-
   AsyncResponseStream *response = request->beginResponseStream("text/html");
+  
   response->printf(htmlTop.c_str(), configuration.name, configuration.name);
   response->printf("<p>Connecting to '%s' ... see you on the other side!</p>", ssid.c_str());
-  response->printf(htmlBottom.c_str(), hr, min % 60, sec % 60, String(DEVICE_NAME), String(""));
+  printHTMLBottom(response);
+
   request->send(response);
 
   ssid.toCharArray(configuration.wifiSsid, sizeof(configuration.wifiSsid));
@@ -369,9 +356,9 @@ void CWifiManager::postSensorUpdate() {
 
     char topic[255];
     bool current;
-    float v;
+    float v; int iv;
 
-#ifdef TEMP_SENSOR    
+#ifdef TEMP_SENSOR
     v = sensorProvider->getTemperature(&current);
     if (current) {
         sprintf_P(topic, "%s/sensor/temperature", configuration.mqttTopic);
@@ -396,13 +383,23 @@ void CWifiManager::postSensorUpdate() {
     Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
     sensorJson["battery_v"] = v;
 
-    int iv = analogRead(BATTERY_SENSOR_ADC_PIN);
+    iv = analogRead(BATTERY_SENSOR_ADC_PIN);
     sprintf_P(topic, "%s/sensor/adc_raw", configuration.mqttTopic);
     mqtt.publish(topic,String(iv).c_str());
     Log.noticeln("Sent '%i' raw ADC value to MQTT topic '%s'", iv, topic);
     sensorJson["adc_raw"] = iv;
 
 #endif
+
+    if (!isApMode()) {
+        iv = dBmtoPercentage(WiFi.RSSI());
+        sprintf_P(topic, "%s/sensor/wifi_percent", configuration.mqttTopic);
+        mqtt.publish(topic,String(iv).c_str());
+        Log.noticeln("Sent '%i%' WiFI signal to MQTT topic '%s'", iv, topic);
+
+        sensorJson["wifi_percent"] = iv;
+        sensorJson["wifi_rssi"] = WiFi.RSSI();
+    }
 
     postedSensorUpdate = true;
 
@@ -487,4 +484,33 @@ void CWifiManager::mqttCallback(char *topic, uint8_t *payload, unsigned int leng
         postSensorUpdate();
     }
     
+}
+
+void CWifiManager::printHTMLTop(Print *p) {
+
+    char s[300] = "";
+    char vs[100];
+    bool current;
+    float fv; int iv; 
+
+#ifdef TEMP_SENSOR
+    fv = sensorProvider->getTemperature(&current);
+    snprintf(vs, sizeof(vs), "<h1>Temperature: %0.2f&#176; %s</h1>", fv, current ? "F" : "F (stale)");
+    strcat(s, vs);
+#endif
+#ifdef BATTERY_SENSOR
+    fv = sensorProvider->getBatteryVoltage(&current);
+    snprintf(vs, sizeof(vs), "<h3>Battery: %0.2fv %s</h3>", fv, current ? "" : "(stale)");
+    strcat(s, vs);
+#endif
+
+    p->printf(htmlTop.c_str(), configuration.name, configuration.name, s);
+}
+
+void CWifiManager::printHTMLBottom(Print *p) {
+    int sec = millis() / 1000;
+    int min = sec / 60;
+    int hr = min / 60;
+
+    p->printf(htmlBottom.c_str(), String(DEVICE_NAME), hr, min % 60, sec % 60, dBmtoPercentage(WiFi.RSSI()));
 }
