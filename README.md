@@ -53,10 +53,35 @@ All parts print without support in the default orientation. White PETG or someth
 * [Box](stl/box.stl)
 * [Lid](stl/lid.stl)
 * [Gasket](stl/gasket.stl)
+* [AnchorLoop](stl/anchor.stl) - optional, can be used to tie the thermometer to the sunny side of the pool if needed
+
+### Build & Assembly
+
+First - drop a brass knurled insert in each of the box bolt holes. The inserts can be driven into the plastic easily with a soldering iron. Make sure they are fairly flush with the surface. Do not lower too much as to compromise the outer wall.
+Close the threads with throw-away set of bolts during the next phase of waterproofing.
+
+#### Waterproofing
+
+Below was my process for the several prototypes I made and the final version. It might be overkill, but I have not experienced a single water leak after weeks in the pool.
+
+1. Coat the box with ... epoxy like coating. Heavier on the bottom and sides of the box. Very light on the top and the lid as to not compromise dimensional fit. Wipe any excess around the top and lid if concerned, when this stuff hardens it is very difficult to correct (sanding and headaches). Mask off the inside of the box where the board and battery will go.
+2. Insert the thermometer sensor in the box and mask it off with tape about 10mm away from the box. Glue without any gaps and apply some silicone on the top side when the glue is dry. Wait for the silicone to dry/cure.
+3. Glue the solar panes, ensure no gaps on the back side. Mask off with tape the effecive area of the solar panel.
+4. Spray (rubber coating), thicker on the bottom and around the unmasked part of the sensor, thinner on top and on the lid to ensure the parts fit snuggly but still fit.
+
+#### Circuit board layout 
+
+* Ensure the output of the TP4056 board goingto the ESP8266 is 5v with the little adjuster provided
+
+#### Assembly
+
+
 
 Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with appropriate waterproof sealer / adhesive.
 The solar panels should be glued and then water proof sealed too.
 The linked prototype board fits inside well and can be screwed with some 1mm screws or glued or taped down.
+
+
 
 ## Data visualization
 
