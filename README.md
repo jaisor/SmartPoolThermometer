@@ -48,12 +48,12 @@ Recommended: [VSCode](https://code.visualstudio.com/) + [PlatformIO](https://pla
 
 ![Case](/img/case.png)
 
-All parts print without support in the default orientation. White PETG or something heat/uv resistant is recommended for the Box and Lid. The Gasket should be printed from something flexible like TPU.
+All parts print without support in the default orientation.
 
-* [Box](stl/box.stl)
-* [Lid](stl/lid.stl)
-* [Gasket](stl/gasket.stl)
-* [AnchorLoop](stl/anchor.stl) - optional, can be used to tie the thermometer to the sunny side of the pool if needed
+* [Box](stl/box.stl) - White PETG or something UV and heat resistant. 4 walls and top/bottom layers. 10-30% infill should be enough.
+* [Lid](stl/lid.stl) - White PETG or something UV and heat resistant. 100% Infill
+* [Gasket](stl/gasket.stl) - TPU or something flesible to act as a gasket. 100% Infill
+* [AnchorLoop](stl/anchor.stl) - TPU, optional, can be used to tie the thermometer in the sunny side of the pool if needed.
 
 ### Build & Assembly
 
