@@ -10,6 +10,16 @@ const config = {
   mqttTopic: process.env.MQTT_TOPIC
 };
 
+if (!config.mqttServer) {
+  console.log(`Blank MQTT server`);
+  return;
+}
+
+if (!config.mqttTopic) {
+  console.log(`Blank MQTT topic`);
+  return;
+}
+
 const privateKey  = fs.readFileSync(config.privateKey, 'utf8');
 const certificate = fs.readFileSync(config.certificate, 'utf8');
 
