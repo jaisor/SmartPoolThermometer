@@ -11,6 +11,7 @@
 #include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <Print.h>
 
 #include "BaseManager.h"
 #include "wifi/SensorProvider.h"
@@ -46,6 +47,9 @@ private:
     void handleRoot(AsyncWebServerRequest *request);
     void handleConnect(AsyncWebServerRequest *request);
     void handleConfig(AsyncWebServerRequest *request);
+
+    void printHTMLTop(Print *p);
+    void printHTMLBottom(Print *p);
 
     void postSensorUpdate();
     bool isApMode();

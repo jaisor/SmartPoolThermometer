@@ -1,17 +1,21 @@
 # Smart Pool Thermometer
 
+![Dash](/img/dash.png)
+![PoolPhoto](/img/photo_pool.jpg)
+
 ## Requirements
 
 * Floating water-tight pool sensor
 * Temperature and other telemetry (internal battery voltage) readings submitted over Wifi via MQTT at reasonable intervals (~5min)
 * Low power consumption, battery powered with solar recharge during the day 
-* Sensor initial configuration via self-hosted AP (`ESP8266ST_XXXXX` / `password123`) / IP (`192.168.4.1`)
-* Sensor resettable to defaults by 3 power-cycles within 2 seconds of boot
-* Data visualization - MQTT - Prpmetheus - Grafana dashboard
+* Device initial configuration via self-hosted AP (`ESP8266ST_XXXXX` / `password123`) / IP (`192.168.4.1`)
+* Device resets to (factory) defaults by 3 power-cycles within 2 seconds of boot
+* Device configurable over MQTT and capable of OTA firmware updates
+* Data visualization - MQTT - Prometheus - Grafana dashboard
 
 ## Notes
 
-Code is compatible with both ESP8266 and ESP32 boards, but ESP8266 draws signifficantly less power (4mA) during deep sleep
+Code is compatible with both ESP8266 and ESP32 boards, but ESP8266 draws significantly less power (4mA) during deep sleep
 
 ## Sensor
 
@@ -44,15 +48,40 @@ Recommended: [VSCode](https://code.visualstudio.com/) + [PlatformIO](https://pla
 
 ![Case](/img/case.png)
 
-All parts print without support in the default orientation. White PETG or something heat/uv resistent is recommended for the Box and Lid. The Gasket should be printed from something flexible like TPU.
+All parts print without support in the default orientation.
 
-* [Box](stl/box.stl)
-* [Lid](stl/lid.stl)
-* [Gasket](stl/gasket.stl)
+* [Box](stl/box.stl) - White PETG or something UV and heat resistant. 4 walls and top/bottom layers. 10-30% infill should be enough.
+* [Lid](stl/lid.stl) - White PETG or something UV and heat resistant. 100% Infill
+* [Gasket](stl/gasket.stl) - TPU or something flesible to act as a gasket. 100% Infill
+* [AnchorLoop](stl/anchor.stl) - TPU, optional, can be used to tie the thermometer in the sunny side of the pool if needed.
 
-Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with apropriate waterproof sealer / adhesive.
+### Build & Assembly
+
+First - drop a brass knurled insert in each of the box bolt holes. The inserts can be driven into the plastic easily with a soldering iron. Make sure they are fairly flush with the surface. Do not lower too much as to compromise the outer wall.
+Close the threads with throw-away set of bolts during the next phase of waterproofing.
+
+#### Waterproofing
+
+Below was my process for the several prototypes I made and the final version. It might be overkill, but I have not experienced a single water leak after weeks in the pool.
+
+1. Coat the box with ... epoxy like coating. Heavier on the bottom and sides of the box. Very light on the top and the lid as to not compromise dimensional fit. Wipe any excess around the top and lid if concerned, when this stuff hardens it is very difficult to correct (sanding and headaches). Mask off the inside of the box where the board and battery will go.
+2. Insert the thermometer sensor in the box and mask it off with tape about 10mm away from the box. Glue without any gaps and apply some silicone on the top side when the glue is dry. Wait for the silicone to dry/cure.
+3. Glue the solar panes, ensure no gaps on the back side. Mask off with tape the effecive area of the solar panel.
+4. Spray (rubber coating), thicker on the bottom and around the unmasked part of the sensor, thinner on top and on the lid to ensure the parts fit snuggly but still fit.
+
+#### Circuit board layout 
+
+* Ensure the output of the TP4056 board goingto the ESP8266 is 5v with the little adjuster provided
+
+#### Assembly
+
+
+
+Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with appropriate waterproof sealer / adhesive.
 The solar panels should be glued and then water proof sealed too.
 The linked prototype board fits inside well and can be screwed with some 1mm screws or glued or taped down.
+
+
 
 ## Data visualization
 
@@ -61,7 +90,7 @@ Useful articles and guides:
 * https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/
 * https://grafana.com/docs/grafana-cloud/quickstart/docker-compose-linux/
 
-The below instructions are better suited for Desktop (local) install. Server deployments should probably use a docker-compose, dedicated users, security, auth, backup and scaling considerations. 
+The following instructions are better suited for a "local" install - desktop, raspberry pi, server on LAN. Deployments expected to communicate over public internet should use appropriate encryption and authentication configuration. Large-scale deployments might also want to leverage a docker-compose, Terraform, etc. 
 
 ### MQTT broker
 

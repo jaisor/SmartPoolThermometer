@@ -20,6 +20,7 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "typeinfo": "cpp",
-        "memory_resource": "cpp"
+        "memory_resource": "cpp",
+        "cstring": "cpp"
     }
 }
