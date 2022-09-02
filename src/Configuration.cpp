@@ -61,10 +61,16 @@ void EEPROM_loadConfig() {
       strcpy(configuration.mqttServer, "");
       configuration.mqttPort = 1883;
       strcpy(configuration.mqttTopic, "");
+      configuration.mqttDataType = MQTT_DATA_JSON;
     #endif
 
     configuration.battVoltsDivider = BATTERY_VOLTS_DIVIDER;
     configuration.deepSleepDurationSec = DEEP_SLEEP_INTERVAL_SEC;
+    #ifdef TEMP_SENSOR
+      configuration.tempUnit = TEMP_UNIT_CELSIUS;
+    #endif
+
+    EEPROM_saveConfig();
   }
 
 #ifdef LED
@@ -110,8 +116,9 @@ void EEPROM_loadConfig() {
 }
 
 void EEPROM_wipe() {
-  Log.warningln("Wiping configuration!");
+  Log.warningln("Wiping configuration with size %i!", EEPROM.length());
   for (uint16_t i = 0; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
+  EEPROM.commit();
 }

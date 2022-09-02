@@ -9,110 +9,110 @@
 
 CDevice::CDevice() {
 
-    tMillisUp = millis();
+  tMillisUp = millis();
 
 #ifdef TEMP_SENSOR
-    sensorReady = true;
-    tLastReading = 0;
+  sensorReady = true;
+  tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
-    oneWire = new OneWire(TEMP_SENSOR_PIN);
-    DeviceAddress da;
-    _ds18b20 = new DS18B20(oneWire);
-    _ds18b20->setConfig(DS18B20_CRC);
-    _ds18b20->begin();
+  oneWire = new OneWire(TEMP_SENSOR_PIN);
+  DeviceAddress da;
+  _ds18b20 = new DS18B20(oneWire);
+  _ds18b20->setConfig(DS18B20_CRC);
+  _ds18b20->begin();
 
-    _ds18b20->getAddress(da);
-    Log.notice("DS18B20 sensor at address: ");
-    for (uint8_t i = 0; i < 8; i++) {
-        if (da[i] < 16) Log.notice("o");
-        Log.notice("%x", da[i]);
-    }
-    Log.noticeln("");
-    
-    _ds18b20->setResolution(12);
-    _ds18b20->requestTemperatures();
+  _ds18b20->getAddress(da);
+  Log.notice("DS18B20 sensor at address: ");
+  for (uint8_t i = 0; i < 8; i++) {
+    if (da[i] < 16) Log.notice("o");
+    Log.notice("%x", da[i]);
+  }
+  Log.noticeln("");
+  
+  _ds18b20->setResolution(12);
+  _ds18b20->requestTemperatures();
 #endif
 #ifdef TEMP_SENSOR_BME280
-    _bme = new Adafruit_BME280();
-    if (!_bme->begin(BME_I2C_ID)) {
-        Log.errorln("BME280 sensor initialiation failed with ID %x", BME_I2C_ID);
-        sensorReady = false;
-    }
+  _bme = new Adafruit_BME280();
+  if (!_bme->begin(BME_I2C_ID)) {
+    Log.errorln("BME280 sensor initialiation failed with ID %x", BME_I2C_ID);
+    sensorReady = false;
+  }
 #endif
 #endif
 
-    Log.infoln("Device initialized");
+  Log.infoln("Device initialized");
 }
 
 CDevice::~CDevice() { 
 #ifdef TEMP_SENSOR
 #ifdef TEMP_SENSOR_DS18B20
-    delete _ds18b20;
+  delete _ds18b20;
 #endif
 #ifdef TEMP_SENSOR_BME280
-    delete _bme;
+  delete _bme;
 #endif
 #endif
-    Log.noticeln("Device destroyed");
+  Log.noticeln("Device destroyed");
 }
 
 uint32_t CDevice::getDeviceId() {
-      // Create AP using fallback and chip ID
-    uint32_t chipId = 0;
-    #ifdef ESP32
-      for(int i=0; i<17; i=i+8) {
-        chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
-      }
-    #elif ESP8266
-      chipId = ESP.getChipId();
-    #endif
+    // Create AP using fallback and chip ID
+  uint32_t chipId = 0;
+  #ifdef ESP32
+    for(int i=0; i<17; i=i+8) {
+    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+    }
+  #elif ESP8266
+    chipId = ESP.getChipId();
+  #endif
 
-    return chipId;
+  return chipId;
 }
 
 void CDevice::loop() {
 
-    if (sensorReady && millis() - tMillisTemp > 1000) {
-        if (millis() - tLastReading < STALE_READING_AGE_MS) {
-            tMillisTemp = millis();
-        }
-        #ifdef TEMP_SENSOR
-        #ifdef TEMP_SENSOR_DS18B20
-            if (_ds18b20->isConversionComplete()) {
-                _temperature = _ds18b20->getTempC();
-                _ds18b20->setResolution(12);
-                _ds18b20->requestTemperatures();
-                tLastReading = millis();
-                Log.verboseln("DS18B20 temp: %FC %FF", _temperature, _temperature*1.8+32);
-            } else {
-                Log.verboseln("DS18B20 conversion not complete");
-            }
-        #endif
-        #ifdef TEMP_SENSOR_BME280
-            _temperature = _bme->readTemperature();
-            _humidity = _bme->readHumidity();
-            _altitude = _bme->readAltitude();
-            tLastReading = millis();
-        #endif
-        #endif
+  if (sensorReady && millis() - tMillisTemp > 1000) {
+    if (millis() - tLastReading < STALE_READING_AGE_MS) {
+      tMillisTemp = millis();
     }
+    #ifdef TEMP_SENSOR
+    #ifdef TEMP_SENSOR_DS18B20
+      if (_ds18b20->isConversionComplete()) {
+        _temperature = _ds18b20->getTempC();
+        _ds18b20->setResolution(12);
+        _ds18b20->requestTemperatures();
+        tLastReading = millis();
+        Log.verboseln("DS18B20 temp: %FC %FF", _temperature, _temperature*1.8+32);
+      } else {
+        Log.verboseln("DS18B20 conversion not complete");
+      }
+    #endif
+    #ifdef TEMP_SENSOR_BME280
+      _temperature = _bme->readTemperature();
+      _humidity = _bme->readHumidity();
+      _altitude = _bme->readAltitude();
+      tLastReading = millis();
+    #endif
+    #endif
+  }
 
 }
 
 #ifdef TEMP_SENSOR_DS18B20
 float CDevice::getTemperature(bool *current) {
-    if (current != NULL) { 
-        *current = millis() - tLastReading < STALE_READING_AGE_MS; 
-    }
-    return _temperature;
+  if (current != NULL) { 
+    *current = millis() - tLastReading < STALE_READING_AGE_MS; 
+  }
+  return _temperature;
 }
 #endif
 
 float CDevice::getBatteryVoltage(bool *current) {  
-    if (current != NULL) { *current = true; } 
-    int v = analogRead(BATTERY_SENSOR_ADC_PIN);
-    Log.verboseln("Battery voltage: %i", v);
-    return (float)v/configuration.battVoltsDivider; 
+  if (current != NULL) { *current = true; } 
+  int v = analogRead(BATTERY_SENSOR_ADC_PIN);
+  Log.verboseln("Battery voltage: %i", v);
+  return (float)v/configuration.battVoltsDivider; 
 }
 
 #ifdef TEMP_SENSOR_BME280
