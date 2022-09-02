@@ -487,9 +487,9 @@ void CWifiManager::postSensorUpdate() {
     mqtt.publish(topic,String(now).c_str());
     Log.noticeln("Sent '%u' timestamp to MQTT topic '%s'", (unsigned long)now, topic);
 
-    sprintf_P(topic, "%s/apmode", configuration.mqttTopic);
-    mqtt.publish(topic,String(isApMode()).c_str());
-    Log.noticeln("Sent '%i' AP mode to MQTT topic '%s'", isApMode(), topic);
+    //sprintf_P(topic, "%s/apmode", configuration.mqttTopic);
+    //mqtt.publish(topic,String(isApMode()).c_str());
+    //Log.noticeln("Sent '%i' AP mode to MQTT topic '%s'", isApMode(), topic);
 
     sprintf_P(topic, "%s/uptime_millis", configuration.mqttTopic);
     mqtt.publish(topic,String(uptimeMillis).c_str());
@@ -501,10 +501,10 @@ void CWifiManager::postSensorUpdate() {
     // Convert to ISO8601 for JSON
     char buf[sizeof "2011-10-08T07:07:09Z"];
     strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
-    sensorJson["timestamp"] = String(buf);
+    sensorJson["timestamp_iso8601"] = String(buf);
 
-    sensorJson["jobDone"] = isJobDone();
-    sensorJson["apMode"] = isApMode();
+    //sensorJson["jobDone"] = isJobDone();
+    //sensorJson["apMode"] = isApMode();
     sensorJson["postedSensorUpdate"] = postedSensorUpdate;
     sensorJson["mqttConfigTopic"] = mqttSubcribeTopicConfig;
 
