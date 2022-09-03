@@ -1,69 +1,35 @@
 const Alexa = require('ask-sdk-core');
-const https = require('https');
+const mqttRestApi = require('./mqtt-rest-api.js');
 
-const config = {
-  apoiHost: process.env.API_HOST,
-  apiPort: process.env.API_PORT,
-  apiPath: process.env.API_PATH,
-  apiKey: process.env.API_KEY
-};
+function tempBriefTag(strings, seconds, temp, tempUnit, assessment) {
+  const str0 = strings[0]; // "As of "
+  const str1 = strings[1]; // " the pool temperature is "
+  const str2 = strings[2]; // " the pool temperature is "
+  const str3 = strings[3]; // ". Jumping in would be "
 
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+  const ageStr = seconds > 3600 ? 'last reading' : seconds > 60 ? Math.ceil(seconds / 60) + ' minutes ago' : seconds + ' seconds ago';
+  const assessmentStr = mqttRestApi.getTemperatureAssessment(temp);
 
-function getDataFromApi() {
-  return new Promise(((resolve, reject) => {
-    var options = {
-      host: config.apoiHost, 
-      port: config.apiPort,
-      path: config.apiPath,
-      method: 'GET',
-      rejectUnauthorized: false,
-      requestCert: true,
-      agent: false,
-      headers: {
-        'api_key': config.apiKey
-      }
-    };
-    
-    const request = https.request(options, (response) => {
-      response.setEncoding('utf8');
-      let returnData = '';
-
-      response.on('data', (chunk) => {
-        returnData += chunk;
-      });
-
-      response.on('end', () => {
-        resolve(JSON.parse(returnData));
-      });
-
-      response.on('error', (error) => {
-        reject(error);
-      });
-    });
-    request.end();
-  }));
+  return `${str0}${ageStr}${str1}${Math.round(temp)}${str2}${tempUnit}${str3}${assessmentStr}`;
 }
-
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
       return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
     async handle(handlerInput) {
-      const r = await getDataFromApi();
+      const r = await mqttRestApi.getTemperatureBrief();
       console.log(r);
   
       var speechText = 'Failed to get temperature';
-      if (r['temp_c']) {
-        const tF = Math.round(r['temp_c'] * 1.8 + 32);
-        speechText = `Pool temperature is ${tF} degrees Fahrenheit`;
+      if (r['temperature']) {
+        speechText = tempBriefTag`As of ${r['reading_age_seconds']} the pool temperature was ${r['temperature']} degrees ${r['temperature_unit']}. Jumping in would be ${r['temperature']}`;
       }
   
       return handlerInput.responseBuilder
         .speak(speechText)
         .reprompt(speechText)
-        .withSimpleCard('Welcome to the Pool Thermometer skill. Ask me what the pool temperature is!', speechText)
+        .withSimpleCard('Pool temperature brief', speechText)
         .withShouldEndSession(true)
         .getResponse();
     }

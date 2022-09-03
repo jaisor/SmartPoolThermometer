@@ -412,7 +412,7 @@ void CWifiManager::postSensorUpdate() {
     v = v * 1.8 + 32;
   }
   char tunit[32];
-  snprintf(tunit, 32, (configuration.tempUnit == TEMP_UNIT_CELSIUS ? "Celsius" : (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT ? "Fahrenheit " : "" )));
+  snprintf(tunit, 32, (configuration.tempUnit == TEMP_UNIT_CELSIUS ? "Celsius" : (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT ? "Fahrenheit" : "" )));
   
   if (current) {
     if (pScalar) {
@@ -505,7 +505,7 @@ void CWifiManager::postSensorUpdate() {
 
     //sensorJson["jobDone"] = isJobDone();
     //sensorJson["apMode"] = isApMode();
-    sensorJson["postedSensorUpdate"] = postedSensorUpdate;
+    //sensorJson["postedSensorUpdate"] = postedSensorUpdate;
     sensorJson["mqttConfigTopic"] = mqttSubcribeTopicConfig;
 
     // sensor Json

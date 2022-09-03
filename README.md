@@ -115,6 +115,18 @@ docker run -dit --restart unless-stopped -p 9324:9000 --name mqtt_json \
     ghcr.io/tg44/mqtt-prometheus-message-exporter:latest
 ```
 
+### MQTT REST API for Alexa
+
+```
+docker run -dit --restart unless-stopped -p 3443:3443 \
+  -e MQTT_SERVER="$MQTT_SERVER" \
+  -e MQTT_TOPIC="$MQTT_TOPIC" \
+  -e HTTPS_PRIVATE_KEY_PATH="$PATH_TO_KEY" \
+  -e HTTPS_CERTIFICATE_PATH="$PATH_TO_CERT" \
+  -e API_KEY="$API_KEY" \
+  jaisor/mqtt-rest-api:latest
+```
+
 ### Prometehus
 
 `prometheus/config.yml`

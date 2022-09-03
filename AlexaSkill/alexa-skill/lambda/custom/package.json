@@ -1,6 +1,14 @@
 {
+  "name": "spt_alexa_skill",
+  "version": "1.0.0",
+  "description": "SmartPoolThermometer Alexa Skill model",
+  "author": "Jordan Marinov <jaisor@gmail.com>",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
   "dependencies": {
-    "ask": "^1.5.0",
+    "ask-sdk-core": "^2.12.1",
     "https": "^1.0.0"
   }
 }
