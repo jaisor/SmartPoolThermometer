@@ -17,51 +17,52 @@
 #include "wifi/SensorProvider.h"
 
 typedef enum {
-    WF_CONNECTING = 0,
-    WF_LISTENING = 1
+  WF_CONNECTING = 0,
+  WF_LISTENING = 1
 } wifi_status;
 
 class CWifiManager: public CBaseManager {
 
 private:
-    unsigned long tMillis;
-    wifi_status status;
-    char softAP_SSID[32];
-    char SSID[32];
-    char mqttSubcribeTopicConfig[255];
-    bool rebootNeeded;
-    bool postedSensorUpdate;
+  unsigned long tMillis;
+  wifi_status status;
+  char softAP_SSID[32];
+  char SSID[32];
+  char mqttSubcribeTopicConfig[255];
+  bool rebootNeeded;
+  bool postedSensorUpdate;
+  
+  float batteryVoltage;
+
+  AsyncWebServer* server;
+  PubSubClient mqtt;
+  ISensorProvider *sensorProvider;
+
+  StaticJsonDocument<2048> sensorJson;
+  StaticJsonDocument<2048> configJson;
+
+  void connect();
+  void listen();
+
+  void handleRoot(AsyncWebServerRequest *request);
+  void handleConnect(AsyncWebServerRequest *request);
+  void handleConfig(AsyncWebServerRequest *request);
+  void handleFactoryReset(AsyncWebServerRequest *request);
+
+  void printHTMLTop(Print *p);
+  void printHTMLBottom(Print *p);
+
+  void postSensorUpdate();
+  bool isApMode();
+
+  void mqttCallback(char *topic, uint8_t *payload, unsigned int);
     
-    float batteryVoltage;
-
-    AsyncWebServer* server;
-    PubSubClient mqtt;
-    ISensorProvider *sensorProvider;
-
-    StaticJsonDocument<2048> sensorJson;
-    StaticJsonDocument<2048> configJson;
-
-    void connect();
-    void listen();
-
-    void handleRoot(AsyncWebServerRequest *request);
-    void handleConnect(AsyncWebServerRequest *request);
-    void handleConfig(AsyncWebServerRequest *request);
-
-    void printHTMLTop(Print *p);
-    void printHTMLBottom(Print *p);
-
-    void postSensorUpdate();
-    bool isApMode();
-
-    void mqttCallback(char *topic, uint8_t *payload, unsigned int);
-        
 public:
 	CWifiManager(ISensorProvider *sp);
-    virtual void loop();
+  virtual void loop();
 
-    bool isRebootNeeded() { return rebootNeeded; }
-    bool isJobDone() { return !isApMode() && postedSensorUpdate; }
+  bool isRebootNeeded() { return rebootNeeded; }
+  bool isJobDone() { return !isApMode() && postedSensorUpdate; }
 };
 
 #endif

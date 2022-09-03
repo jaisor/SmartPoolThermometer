@@ -1,5 +1,5 @@
 {
-  "name": "spt_mqtt_api",
+  "name": "spt_mqtt_rest_api",
   "version": "1.0.0",
   "description": "SmartPoolThermometer MQTT Rest API - basic REST API that subscribes to the (local) MQTT broker and exposes the relevant data thorugh an API key. Inteded for use by a Lambda AWS function backing an Alexa skill",
   "author": "Jordan Marinov <jaisor@gmail.com>",

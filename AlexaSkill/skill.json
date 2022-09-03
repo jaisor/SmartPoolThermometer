@@ -1,0 +1,44 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "pool temperature",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AskPoolTemperatureIntent",
+                    "slots": [],
+                    "samples": [
+                        "status",
+                        "temperature",
+                        "about the temperature",
+                        "about temperature",
+                        "what's the pool temperature",
+                        "what is the pool temperature",
+                        "what's the temperature",
+                        "what is the temperature"
+                    ]
+                }
+            ],
+            "types": []
+        }
+    }
+}

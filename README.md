@@ -95,9 +95,6 @@ The following instructions are better suited for a "local" install - desktop, ra
 ### MQTT broker
 
 ```
-```
-
-```
 docker run -dit \
     --name=mqtt-mac \
     --restart=unless-stopped \
@@ -106,13 +103,28 @@ docker run -dit \
     eclipse-mosquitto:latest
 ```
 
-### MQTT exporter
+### MQTT JSON exporter
+
+Subscribes to a topic, parses JSON received from that topic and populates Prometheus with the compatible JSON values.
+https://github.com/tg44/mqtt-prometheus-message-exporter
 
 ```
-docker run -dit \
-  -v "$APPROPRIATE_VAR_PATH/prometheus/mqtt_exporter.yaml:/conf/mqtt_exporter.yaml:ro" \
-  -p "9344:9344" --name mqtt_exporter \
-  fhemberger/mqtt_exporter:latest -c /conf/mqtt_exporter.yaml
+docker run -dit --restart unless-stopped -p 9324:9000 --name mqtt_json \
+    -v "$APPROPRIATE_VAR_PATH/mqtt_json:/data" \
+    -e CONF_PATH=/data/exporter.conf \
+    ghcr.io/tg44/mqtt-prometheus-message-exporter:latest
+```
+
+### MQTT REST API for Alexa
+
+```
+docker run -dit --restart unless-stopped -p 3443:3443 \
+  -e MQTT_SERVER="$MQTT_SERVER" \
+  -e MQTT_TOPIC="$MQTT_TOPIC" \
+  -e HTTPS_PRIVATE_KEY_PATH="$PATH_TO_KEY" \
+  -e HTTPS_CERTIFICATE_PATH="$PATH_TO_CERT" \
+  -e API_KEY="$API_KEY" \
+  jaisor/mqtt-rest-api:latest
 ```
 
 ### Prometehus
