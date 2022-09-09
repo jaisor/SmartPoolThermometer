@@ -1,5 +1,4 @@
-#ifndef _SENSOR_PROVIDER_H
-#define _SENSOR_PROVIDER_H
+#pragma once
 
 #include "Configuration.h"
 
@@ -12,5 +11,3 @@ public:
   virtual uint32_t getDeviceId() { return 0; };
   virtual unsigned long getUptime() { return 0; };
 };
-
-#endif

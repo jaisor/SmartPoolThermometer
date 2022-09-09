@@ -66,9 +66,7 @@ void EEPROM_loadConfig() {
 
     configuration.battVoltsDivider = BATTERY_VOLTS_DIVIDER;
     configuration.deepSleepDurationSec = DEEP_SLEEP_INTERVAL_SEC;
-    #ifdef TEMP_SENSOR
-      configuration.tempUnit = TEMP_UNIT_CELSIUS;
-    #endif
+    configuration.tempUnit = TEMP_UNIT_CELSIUS;
 
     EEPROM_saveConfig();
   }

@@ -1,5 +1,4 @@
-#ifndef _BASE_MANAGER_H
-#define _BASE_MANAGER_H
+#pragma once
 
 #include "Configuration.h"
 
@@ -26,5 +25,3 @@ public:
 
   virtual void loop() {};
 };
-
-#endif

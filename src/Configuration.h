@@ -1,5 +1,4 @@
-#ifndef _CONFIGURATION_H
-#define _CONFIGURATION_H
+#pragma once
 
 #include <Arduino.h>
 #include <functional>
@@ -49,17 +48,18 @@
   #define LED_COLOR_ORDER GRB
 #endif
 
-#define TEMP_SENSOR
-#ifdef TEMP_SENSOR
-  #define TEMP_UNIT_CELSIUS     0
-  #define TEMP_UNIT_FAHRENHEIT  1
-  #define TEMP_SENSOR_DS18B20
-  //#define TEMP_SENSOR_BME280
-  #ifdef ESP32
-    #define TEMP_SENSOR_PIN 0
-  #elif ESP8266
-    #define TEMP_SENSOR_PIN D3
-  #endif
+#define TEMP_UNIT_CELSIUS     0
+#define TEMP_UNIT_FAHRENHEIT  1
+//#define TEMP_SENSOR_DS18B20
+//#define TEMP_SENSOR_BME280
+#define TEMP_SENSOR_DHT
+#ifdef ESP32
+  #define TEMP_SENSOR_PIN 0
+#elif ESP8266
+  #define TEMP_SENSOR_PIN D3
+#endif
+#ifdef TEMP_SENSOR_DHT
+  #define TEMP_SENSOR_DHT_TYPE    DHT22
 #endif
 
 #define BATTERY_SENSOR  // ADC A0 using 0-3.3v voltage divider
@@ -106,9 +106,7 @@ struct configuration_t {
   char name[128];
   float battVoltsDivider;
   uint16_t deepSleepDurationSec; // 0 - deep sleep disabled, stay awake
-  #ifdef TEMP_SENSOR
-    uint8_t tempUnit;
-  #endif
+  uint8_t tempUnit;
 
   char _loaded[7]; // used to check if EEPROM was correctly set
   
@@ -122,5 +120,3 @@ void EEPROM_clearFactoryReset();
 void EEPROM_saveConfig();
 void EEPROM_loadConfig();
 void EEPROM_wipe();
-
-#endif

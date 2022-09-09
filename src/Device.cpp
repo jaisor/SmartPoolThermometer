@@ -10,9 +10,8 @@
 CDevice::CDevice() {
 
   tMillisUp = millis();
-
-#ifdef TEMP_SENSOR
   sensorReady = true;
+
   tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
   oneWire = new OneWire(TEMP_SENSOR_PIN);
@@ -39,19 +38,33 @@ CDevice::CDevice() {
     sensorReady = false;
   }
 #endif
+#ifdef TEMP_SENSOR_DHT
+  _dht = new DHT_Unified(TEMP_SENSOR_PIN, TEMP_SENSOR_DHT_TYPE);
+  _dht->begin();
+  sensor_t sensor;
+  _dht->temperature().getSensor(&sensor);
+  Log.noticeln("DHT temperature sensor name(%s) v(%u) id(%u) range(%F - %F) res(%F)",
+    sensor.name, sensor.version, sensor.sensor_id, 
+    sensor.min_value, sensor.max_value, sensor.resolution);
+  _dht->humidity().getSensor(&sensor);
+  Log.noticeln("DHT humidity sensor name(%s) v(%u) id(%u) range(%F - %F) res(%F)",
+    sensor.name, sensor.version, sensor.sensor_id, 
+    sensor.min_value, sensor.max_value, sensor.resolution);
+  minDelayMs = sensor.min_delay / 1000;
 #endif
 
   Log.infoln("Device initialized");
 }
 
 CDevice::~CDevice() { 
-#ifdef TEMP_SENSOR
 #ifdef TEMP_SENSOR_DS18B20
   delete _ds18b20;
 #endif
 #ifdef TEMP_SENSOR_BME280
   delete _bme;
 #endif
+#ifdef TEMP_SENSOR_DHT
+  delete _dht;
 #endif
   Log.noticeln("Device destroyed");
 }
@@ -72,11 +85,15 @@ uint32_t CDevice::getDeviceId() {
 
 void CDevice::loop() {
 
-  if (sensorReady && millis() - tMillisTemp > 1000) {
+  uint32_t delay = 1000;
+  #ifdef TEMP_SENSOR_DHT
+    delay = minDelayMs;
+  #endif
+
+  if (sensorReady && millis() - tMillisTemp > delay) {
     if (millis() - tLastReading < STALE_READING_AGE_MS) {
       tMillisTemp = millis();
     }
-    #ifdef TEMP_SENSOR
     #ifdef TEMP_SENSOR_DS18B20
       if (_ds18b20->isConversionComplete()) {
         _temperature = _ds18b20->getTempC();
@@ -94,12 +111,37 @@ void CDevice::loop() {
       _altitude = _bme->readAltitude();
       tLastReading = millis();
     #endif
+    #ifdef TEMP_SENSOR_DHT
+      sensors_event_t event;
+      bool goodRead = true;
+      // temperature
+      _dht->temperature().getEvent(&event);
+      if (isnan(event.temperature)) {
+        Log.warningln(F("Error reading DHT temperature!"));
+        goodRead = false;
+      } else {
+        _temperature = event.temperature;
+        Log.verboseln("DHT temp: %FC %FF", _temperature, _temperature*1.8+32);
+      }
+      // humidity
+      _dht->humidity().getEvent(&event);
+      if (isnan(event.relative_humidity)) {
+        Log.warningln(F("Error reading DHT humidity!"));
+        goodRead = false;
+      }
+      else {
+        _humidity = event.relative_humidity;
+        Log.verboseln("DHT humidity: %F%%", _humidity);
+      }
+      if (goodRead) {
+        tLastReading = millis();
+      }
     #endif
   }
 
 }
 
-#ifdef TEMP_SENSOR_DS18B20
+#if defined(TEMP_SENSOR_DS18B20) || defined(TEMP_SENSOR_DHT)
 float CDevice::getTemperature(bool *current) {
   if (current != NULL) { 
     *current = millis() - tLastReading < STALE_READING_AGE_MS; 
@@ -116,6 +158,15 @@ float CDevice::getBatteryVoltage(bool *current) {
 }
 
 #ifdef TEMP_SENSOR_BME280
-float CDevice::getHumidity(bool *current) const;
-float CDevice::getAltitude(bool *current) const;
+float CDevice::getHumidity(bool *current);
+float CDevice::getAltitude(bool *current);
+#endif
+
+#ifdef TEMP_SENSOR_DHT
+float CDevice::getHumidity(bool *current) {
+  if (current != NULL) { 
+    *current = millis() - tLastReading < STALE_READING_AGE_MS; 
+  }
+  return _humidity;
+}
 #endif

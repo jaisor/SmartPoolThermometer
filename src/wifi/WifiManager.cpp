@@ -406,7 +406,6 @@ void CWifiManager::postSensorUpdate() {
   bool pJson = configuration.mqttDataType == MQTT_DATA_JSON || configuration.mqttDataType == MQTT_DATA_BOTH;
   bool pScalar = configuration.mqttDataType == MQTT_DATA_SCALAR || configuration.mqttDataType == MQTT_DATA_BOTH;
 
-#ifdef TEMP_SENSOR
   v = sensorProvider->getTemperature(&current);
   if (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT) {
     v = v * 1.8 + 32;
@@ -438,29 +437,29 @@ void CWifiManager::postSensorUpdate() {
       sensorJson["humidit_unit"] = "percent";
     }
   }
-#endif
 
 #ifdef BATTERY_SENSOR
-  v = (float)(batteryVoltage + sensorProvider->getBatteryVoltage(NULL)) / 2.0;
-  if (pScalar) {
-    sprintf_P(topic, "%s/battery", configuration.mqttTopic);
-    mqtt.publish(topic,String(v, 2).c_str());
-    Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
-  }
-  if (pJson) {
-    sensorJson["battery_v"] = v;
-  }
+  if (configuration.battVoltsDivider > 0) {
+    v = (float)(batteryVoltage + sensorProvider->getBatteryVoltage(NULL)) / 2.0;
+    if (pScalar) {
+      sprintf_P(topic, "%s/battery", configuration.mqttTopic);
+      mqtt.publish(topic,String(v, 2).c_str());
+      Log.noticeln("Sent '%Fv' battery voltage to MQTT topic '%s'", v, topic);
+    }
+    if (pJson) {
+      sensorJson["battery_v"] = v;
+    }
 
-  iv = analogRead(BATTERY_SENSOR_ADC_PIN);
-  if (pScalar) {
-    sprintf_P(topic, "%s/adc_raw", configuration.mqttTopic);
-    mqtt.publish(topic,String(iv).c_str());
-    Log.noticeln("Sent '%i' raw ADC value to MQTT topic '%s'", iv, topic);
+    iv = analogRead(BATTERY_SENSOR_ADC_PIN);
+    if (pScalar) {
+      sprintf_P(topic, "%s/adc_raw", configuration.mqttTopic);
+      mqtt.publish(topic,String(iv).c_str());
+      Log.noticeln("Sent '%i' raw ADC value to MQTT topic '%s'", iv, topic);
+    }
+    if (pJson) {
+      sensorJson["adc_raw"] = iv;
+    }
   }
-  if (pJson) {
-    sensorJson["adc_raw"] = iv;
-  }
-
 #endif
 
   if (!isApMode()) {
@@ -573,7 +572,6 @@ void CWifiManager::printHTMLTop(Print *p) {
   bool current;
   float fv;
 
-#ifdef TEMP_SENSOR
   fv = sensorProvider->getTemperature(&current);
   if (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT) {
     fv = fv * 1.8 + 32;
@@ -583,7 +581,7 @@ void CWifiManager::printHTMLTop(Print *p) {
 
   snprintf(vs, sizeof(vs), "<h1>Temperature: %0.2f&#176; %s %s</h1>", fv, tunit, current ? "" : "(stale)");
   strcat(s, vs);
-#endif
+
 #ifdef BATTERY_SENSOR
   fv = sensorProvider->getBatteryVoltage(&current);
   snprintf(vs, sizeof(vs), "<h3>Battery: %0.2fv %s</h3>", fv, current ? "" : "(stale)");

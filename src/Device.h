@@ -1,11 +1,9 @@
-#ifndef _DEVICE_MANAGER_H
-#define _DEVICE_MANAGER_H
+#pragma once
 
 #include <functional>
 #include "Configuration.h"
 #include "wifi/SensorProvider.h"
 
-#ifdef TEMP_SENSOR  
 #ifdef TEMP_SENSOR_DS18B20
   #include <OneWire.h>
   #include <DS18B20.h>
@@ -14,6 +12,9 @@
   #include <Adafruit_Sensor.h>
   #include <Adafruit_BME280.h>
 #endif
+#ifdef TEMP_SENSOR_DHT
+  #include <DHT.h>
+  #include <DHT_U.h>
 #endif
 
 #define STALE_READING_AGE_MS 10000 // 10 sec
@@ -28,11 +29,13 @@ public:
   virtual uint32_t getDeviceId();
   virtual unsigned long getUptime() { return millis() - tMillisUp; };
 
-#ifdef TEMP_SENSOR_DS18B20
+#if defined(TEMP_SENSOR_DS18B20) || defined(TEMP_SENSOR_DHT)
   virtual float getTemperature(bool *current);
 #endif
-#ifdef TEMP_SENSOR_BME280
+#if defined(TEMP_SENSOR_BME280) || defined(TEMP_SENSOR_DHT)
   virtual float getHumidity(bool *current);
+#endif
+#if defined(TEMP_SENSOR_BME280)
   virtual float getAltitude(bool *current);
 #endif
 #ifdef BATTERY_SENSOR
@@ -42,7 +45,6 @@ public:
 private:
   unsigned long tMillisUp;
 
-#ifdef TEMP_SENSOR
   unsigned long tMillisTemp;
   unsigned long tLastReading;
   bool sensorReady;
@@ -56,8 +58,10 @@ private:
   float _humidity, _altitude;
   Adafruit_BME280 *_bme;
 #endif
+#ifdef TEMP_SENSOR_DHT
+  float _humidity;
+  DHT_Unified *_dht;
+  unsigned long minDelayMs;
 #endif
 
 };
-
-#endif

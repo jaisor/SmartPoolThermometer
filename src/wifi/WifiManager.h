@@ -1,5 +1,4 @@
-#ifndef _WIFI_MANAGER_H
-#define _WIFI_MANAGER_H
+#pragma once
 
 #ifdef ESP32
   #include <WiFi.h>
@@ -64,5 +63,3 @@ public:
   bool isRebootNeeded() { return rebootNeeded; }
   bool isJobDone() { return !isApMode() && postedSensorUpdate; }
 };
-
-#endif
