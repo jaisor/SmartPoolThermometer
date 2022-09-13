@@ -10,7 +10,8 @@
 CDevice::CDevice() {
 
   tMillisUp = millis();
-  sensorReady = true;
+  tMillisTemp = millis();
+  sensorReady = false;
 
   tLastReading = 0;
 #ifdef TEMP_SENSOR_DS18B20
@@ -30,12 +31,18 @@ CDevice::CDevice() {
   
   _ds18b20->setResolution(12);
   _ds18b20->requestTemperatures();
+
+  sensorReady = true;
+  tMillisTemp = 0;
 #endif
 #ifdef TEMP_SENSOR_BME280
   _bme = new Adafruit_BME280();
   if (!_bme->begin(BME_I2C_ID)) {
     Log.errorln("BME280 sensor initialiation failed with ID %x", BME_I2C_ID);
     sensorReady = false;
+  } else {
+    sensorReady = true;
+    tMillisTemp = 0;
   }
 #endif
 #ifdef TEMP_SENSOR_DHT
@@ -51,6 +58,7 @@ CDevice::CDevice() {
     sensor.name, sensor.version, sensor.sensor_id, 
     sensor.min_value, sensor.max_value, sensor.resolution);
   minDelayMs = sensor.min_delay / 1000;
+  Log.noticeln("DHT sensor min delay %i", minDelayMs);
 #endif
 
   Log.infoln("Device initialized");
@@ -90,6 +98,10 @@ void CDevice::loop() {
     delay = minDelayMs;
   #endif
 
+  if (!sensorReady && millis() - tMillisTemp > delay) {
+    sensorReady = true;
+  }
+
   if (sensorReady && millis() - tMillisTemp > delay) {
     if (millis() - tLastReading < STALE_READING_AGE_MS) {
       tMillisTemp = millis();
@@ -112,28 +124,29 @@ void CDevice::loop() {
       tLastReading = millis();
     #endif
     #ifdef TEMP_SENSOR_DHT
-      sensors_event_t event;
-      bool goodRead = true;
-      // temperature
-      _dht->temperature().getEvent(&event);
-      if (isnan(event.temperature)) {
-        Log.warningln(F("Error reading DHT temperature!"));
-        goodRead = false;
-      } else {
-        _temperature = event.temperature;
-        Log.verboseln("DHT temp: %FC %FF", _temperature, _temperature*1.8+32);
-      }
-      // humidity
-      _dht->humidity().getEvent(&event);
-      if (isnan(event.relative_humidity)) {
-        Log.warningln(F("Error reading DHT humidity!"));
-        goodRead = false;
-      }
-      else {
-        _humidity = event.relative_humidity;
-        Log.verboseln("DHT humidity: %F%%", _humidity);
-      }
-      if (goodRead) {
+      if (millis() - tLastReading > minDelayMs) {
+        sensors_event_t event;
+        bool goodRead = true;
+        // temperature
+        _dht->temperature().getEvent(&event);
+        if (isnan(event.temperature)) {
+          Log.warningln(F("Error reading DHT temperature!"));
+          goodRead = false;
+        } else {
+          _temperature = event.temperature;
+          Log.noticeln("DHT temp: %FC %FF", _temperature, _temperature*1.8+32);
+        }
+        // humidity
+        _dht->humidity().getEvent(&event);
+        if (isnan(event.relative_humidity)) {
+          Log.warningln(F("Error reading DHT humidity!"));
+          goodRead = false;
+        }
+        else {
+          _humidity = event.relative_humidity;
+          Log.noticeln("DHT humidity: %F%%", _humidity);
+        }
+        
         tLastReading = millis();
       }
     #endif

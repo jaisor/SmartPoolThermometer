@@ -28,6 +28,7 @@ public:
 
   virtual uint32_t getDeviceId();
   virtual unsigned long getUptime() { return millis() - tMillisUp; };
+  virtual bool isSensorReady() { return sensorReady; };
 
 #if defined(TEMP_SENSOR_DS18B20) || defined(TEMP_SENSOR_DHT)
   virtual float getTemperature(bool *current);

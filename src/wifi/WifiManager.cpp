@@ -400,41 +400,45 @@ void CWifiManager::postSensorUpdate() {
   }
 
   char topic[255];
-  bool current;
+  bool current = false;
   float v; int iv;
 
   bool pJson = configuration.mqttDataType == MQTT_DATA_JSON || configuration.mqttDataType == MQTT_DATA_BOTH;
   bool pScalar = configuration.mqttDataType == MQTT_DATA_SCALAR || configuration.mqttDataType == MQTT_DATA_BOTH;
 
-  v = sensorProvider->getTemperature(&current);
-  if (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT) {
-    v = v * 1.8 + 32;
-  }
-  char tunit[32];
-  snprintf(tunit, 32, (configuration.tempUnit == TEMP_UNIT_CELSIUS ? "Celsius" : (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT ? "Fahrenheit" : "" )));
-  
-  if (current) {
-    if (pScalar) {
-      sprintf_P(topic, "%s/temperature", configuration.mqttTopic);
-      mqtt.publish(topic,String(v, 2).c_str());
-      Log.noticeln("Sent '%F' %s temp to MQTT topic '%s'", v, tunit, topic);
-    }
-    if (pJson) {
-      sensorJson["temperature"] = v;
-      sensorJson["temperature_unit"] = tunit;
-    }
-  }
+  bool sensorReady = sensorProvider->isSensorReady();
 
-  v = sensorProvider->getHumidity(&current);
-  if (current) {
-    if (pScalar) {
-      sprintf_P(topic, "%s/humidity", configuration.mqttTopic);
-      mqtt.publish(topic,String(v, 2).c_str());
-      Log.noticeln("Sent '%F%' humidity to MQTT topic '%s'", v, topic);
+  if (sensorReady) {
+    v = sensorProvider->getTemperature(&current);
+    if (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT) {
+      v = v * 1.8 + 32;
     }
-    if (pJson) {
-      sensorJson["humidity"] = v;
-      sensorJson["humidit_unit"] = "percent";
+    char tunit[32];
+    snprintf(tunit, 32, (configuration.tempUnit == TEMP_UNIT_CELSIUS ? "Celsius" : (configuration.tempUnit == TEMP_UNIT_FAHRENHEIT ? "Fahrenheit" : "" )));
+    
+    if (current) {
+      if (pScalar) {
+        sprintf_P(topic, "%s/temperature", configuration.mqttTopic);
+        mqtt.publish(topic,String(v, 2).c_str());
+        Log.noticeln("Sent '%F' %s temp to MQTT topic '%s'", v, tunit, topic);
+      }
+      if (pJson) {
+        sensorJson["temperature"] = v;
+        sensorJson["temperature_unit"] = tunit;
+      }
+    }
+
+    v = sensorProvider->getHumidity(&current);
+    if (current) {
+      if (pScalar) {
+        sprintf_P(topic, "%s/humidity", configuration.mqttTopic);
+        mqtt.publish(topic,String(v, 2).c_str());
+        Log.noticeln("Sent '%F%' humidity to MQTT topic '%s'", v, topic);
+      }
+      if (pJson) {
+        sensorJson["humidity"] = v;
+        sensorJson["humidit_unit"] = "percent";
+      }
     }
   }
 
@@ -475,7 +479,7 @@ void CWifiManager::postSensorUpdate() {
     }
   }
 
-  postedSensorUpdate = true;
+  postedSensorUpdate = sensorReady;
 
   time_t now; 
   time(&now);
@@ -496,6 +500,7 @@ void CWifiManager::postSensorUpdate() {
   }
 
   if (pJson) {
+    sensorJson["sensorReady"] = sensorReady;
     sensorJson["uptime_millis"] = uptimeMillis;
     // Convert to ISO8601 for JSON
     char buf[sizeof "2011-10-08T07:07:09Z"];
