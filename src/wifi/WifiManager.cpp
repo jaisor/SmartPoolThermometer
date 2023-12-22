@@ -31,11 +31,11 @@ int dBmtoPercentage(int dBm) {
   return quality;
 }
 
-#ifdef ESP8266
-bool getLocalTime(struct tm * info, uint32_t ms=5000) {
+#ifdef ESP8266_old
+bool getLocalTime(struct tm * info) {
   uint32_t start = millis();
   time_t now;
-  while((millis()-start) <= ms) {
+  while((millis()-start) <= 5000) {
     time(&now);
     localtime_r(&now, info);
     if(info->tm_year > (2016 - 1900)){
@@ -104,7 +104,7 @@ const String htmlDeviceConfigs = "<hr><h2>Configs</h2>\
   </form>";
 
 CWifiManager::CWifiManager(ISensorProvider *sp): 
-rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp) {  
+rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp), wifiRetries(0) {  
 
   // Start capturing voltage
   batteryVoltage = sensorProvider->getBatteryVoltage(NULL);
@@ -134,6 +134,7 @@ void CWifiManager::connect() {
     // Join AP from Config
     Log.infoln("Connecting to WiFi: '%s'", SSID);
     WiFi.begin(SSID, configuration.wifiPassword);
+    wifiRetries = 0;
 
   } else {
 
@@ -142,6 +143,7 @@ void CWifiManager::connect() {
     Log.infoln("Creating WiFi: '%s' / '%s'", softAP_SSID, WIFI_FALLBACK_PASS);
 
     if (WiFi.softAP(softAP_SSID, WIFI_FALLBACK_PASS)) {
+      wifiRetries = 0;
       Log.infoln("Wifi AP '%s' created, listening on '%s'", softAP_SSID, WiFi.softAPIP().toString().c_str());
     } else {
       Log.errorln("Wifi AP faliled");
@@ -242,12 +244,14 @@ void CWifiManager::loop() {
     connect();
     } break;
     case WF_CONNECTING: {
-    if (millis() - tMillis > MAX_CONNECT_TIMEOUT_MS) {
-      Log.warning("Connecting failed (wifi status %u) after %u ms, create an AP instead", WiFi.status(), (millis() - tMillis));
-      tMillis = millis();
-      strcpy(SSID, "");
-      connect();
-    }
+      if (millis() - tMillis > MAX_CONNECT_TIMEOUT_MS) {
+        tMillis = millis();
+        if (wifiRetries++ > 3) {
+          Log.warningln("Connecting failed (wifi status %i) after %l ms, create an AP instead", (millis() - tMillis), WiFi.status());
+          strcpy(SSID, "");
+        }
+        connect();
+      }
     } break;
 
   }

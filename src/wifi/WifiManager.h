@@ -23,6 +23,7 @@ typedef enum {
 class CWifiManager: public CBaseManager {
 
 private:
+  uint8_t wifiRetries;
   unsigned long tMillis;
   wifi_status status;
   char softAP_SSID[32];
