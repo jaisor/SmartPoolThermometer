@@ -346,9 +346,9 @@ void CWifiManager::handleConfig(AsyncWebServerRequest *request) {
   configuration.mqttDataType = mqttDataType;
   Log.infoln("MQTT Data Type: %u", mqttDataType);
 
-  uint16_t battVoltsDivider = atoi(request->arg("battVoltsDivider").c_str());
+  float battVoltsDivider = atof(request->arg("battVoltsDivider").c_str());
   configuration.battVoltsDivider = battVoltsDivider;
-  Log.infoln("battVoltsDivider: %u", battVoltsDivider);
+  Log.infoln("battVoltsDivider: %D", battVoltsDivider);
 
   float deepSleepDurationSec = atof(request->arg("deepSleepDurationSec").c_str());
   configuration.deepSleepDurationSec = deepSleepDurationSec;

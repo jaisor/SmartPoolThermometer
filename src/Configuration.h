@@ -70,7 +70,7 @@
 #define INTERNAL_LED_PIN LED_BUILTIN
 
 #define DEEP_SLEEP_INTERVAL_SEC 300 // 5 min
-#define BATTERY_VOLTS_DIVIDER 162.3 // 169.0 or 222.3 not sure why it flips
+#define BATTERY_VOLTS_DIVIDER 162.3 // 162.3 - LiPo 1cell max 4.2v; 45.2 - Pb auto max 14.8v
 #define DEEP_SLEEP_MIN_AWAKE_MS 5000 // Minimum time to remain awake after smooth boot
 
 #define MQTT_DATA_JSON  0
