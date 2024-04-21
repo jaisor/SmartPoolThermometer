@@ -60,7 +60,16 @@ CDevice::CDevice() {
   minDelayMs = sensor.min_delay / 1000;
   Log.noticeln("DHT sensor min delay %i", minDelayMs);
 #endif
-
+#ifdef TEMP_SENSOR_AHT
+  _aht = new Adafruit_AHTX0();
+  if (!_aht->begin()) {
+    Log.errorln("Failed to initialize AHT sensor, check wiring");
+    sensorReady = false;
+  } else {
+    sensorReady = true;
+    tMillisTemp = 0;
+  }
+#endif
   Log.infoln("Device initialized");
 }
 
@@ -73,6 +82,9 @@ CDevice::~CDevice() {
 #endif
 #ifdef TEMP_SENSOR_DHT
   delete _dht;
+#endif
+#ifdef TEMP_SENSOR_AHT
+  delete _aht;
 #endif
   Log.noticeln("Device destroyed");
 }
@@ -150,11 +162,37 @@ void CDevice::loop() {
         tLastReading = millis();
       }
     #endif
+    #ifdef TEMP_SENSOR_AHT
+      if (millis() - tLastReading > minDelayMs) {
+        sensors_event_t eh, et;
+        bool goodRead = true;
+        _aht->getEvent(&eh, &et);
+        // temperature
+        if (isnan(et.temperature)) {
+          Log.warningln(F("Error reading AHT temperature!"));
+          goodRead = false;
+        } else {
+          _temperature = et.temperature;
+          Log.noticeln("AHT temp: %FC %FF", _temperature, _temperature*1.8+32);
+        }
+        // humidity
+        if (isnan(eh.relative_humidity)) {
+          Log.warningln(F("Error reading AHT humidity!"));
+          goodRead = false;
+        }
+        else {
+          _humidity = eh.relative_humidity;
+          Log.noticeln("AHT humidity: %F%%", _humidity);
+        }
+        
+        tLastReading = millis();
+      }
+    #endif
   }
 
 }
 
-#if defined(TEMP_SENSOR_DS18B20) || defined(TEMP_SENSOR_DHT)
+#if defined(TEMP_SENSOR_DS18B20) || defined(TEMP_SENSOR_DHT) || defined(TEMP_SENSOR_AHT)
 float CDevice::getTemperature(bool *current) {
   if (current != NULL) { 
     *current = millis() - tLastReading < STALE_READING_AGE_MS; 
@@ -175,7 +213,7 @@ float CDevice::getHumidity(bool *current);
 float CDevice::getAltitude(bool *current);
 #endif
 
-#ifdef TEMP_SENSOR_DHT
+#if defined(TEMP_SENSOR_DHT) || defined(TEMP_SENSOR_AHT)
 float CDevice::getHumidity(bool *current) {
   if (current != NULL) { 
     *current = millis() - tLastReading < STALE_READING_AGE_MS; 

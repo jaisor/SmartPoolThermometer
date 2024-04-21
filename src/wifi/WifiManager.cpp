@@ -6,7 +6,7 @@
 #include <WiFiClient.h>
 #include <Time.h>
 #include <ezTime.h>
-#include <AsyncElegantOTA.h>
+#include <ElegantOTA.h>
 #include <StreamUtils.h>
 
 #include "wifi/WifiManager.h"
@@ -47,7 +47,7 @@ bool getLocalTime(struct tm * info) {
 }
 #endif
 
-const String htmlTop = "<html>\
+const String htmlTop = FPSTR("<html>\
   <head>\
   <title>%s</title>\
   <style>\
@@ -55,25 +55,25 @@ const String htmlTop = "<html>\
   </style>\
   </head>\
   <body>\
-  <h1>%s - Smart Pool Thermometer</h1>%s";
+  <h1>%s - Smart Pool Thermometer</h1>%s");
 
-const String htmlBottom = "<br><br><hr>\
+const String htmlBottom = FPSTR("<br><br><hr>\
   <p><b>%s</b><br>\
   Uptime: <b>%02d:%02d:%02d</b><br>\
   WiFi Signal Strength: <b>%i%%</b>\
   </p></body>\
-</html>";
+</html>");
 
-const String htmlWifiApConnectForm = "<hr><h2>Connect to WiFi Access Point (AP)</h2>\
+const String htmlWifiApConnectForm = FPSTR("<hr><h2>Connect to WiFi Access Point (AP)</h2>\
   <form method='POST' action='/connect' enctype='application/x-www-form-urlencoded'>\
     <label for='ssid'>SSID (AP Name):</label><br>\
     <input type='text' id='ssid' name='ssid'><br><br>\
     <label for='pass'>Password (WPA2):</label><br>\
     <input type='password' id='pass' name='password' minlength='8' autocomplete='off' required><br><br>\
     <input type='submit' value='Connect...'>\
-  </form>";
+  </form>");
 
-const String htmlDeviceConfigs = "<hr><h2>Configs</h2>\
+const String htmlDeviceConfigs = FPSTR("<hr><h2>Configs</h2>\
   <form method='POST' action='/config' enctype='application/x-www-form-urlencoded'>\
     <label for='deviceName'>Device name:</label><br>\
     <input type='text' id='deviceName' name='deviceName' value='%s'><br>\
@@ -101,7 +101,7 @@ const String htmlDeviceConfigs = "<hr><h2>Configs</h2>\
     <small><i>0 = disable sleep, keep awake, drain the battery</i></small><br>\
     <br>\
     <input type='submit' value='Set...'>\
-  </form>";
+  </form>");
 
 CWifiManager::CWifiManager(ISensorProvider *sp): 
 rebootNeeded(false), postedSensorUpdate(false), sensorProvider(sp), wifiRetries(0) {  
@@ -176,7 +176,7 @@ void CWifiManager::listen() {
   }
 
   // OTA
-  AsyncElegantOTA.begin(server);
+  ElegantOTA.begin(server);
 
   // MQTT
   mqtt.setServer(configuration.mqttServer, configuration.mqttPort);
@@ -224,6 +224,8 @@ void CWifiManager::loop() {
     listen();
     return;
   }
+
+  ElegantOTA.loop();
 
   mqtt.loop();
 
@@ -356,7 +358,7 @@ void CWifiManager::handleConfig(AsyncWebServerRequest *request) {
 
   uint16_t tempUnit = atoi(request->arg("tempUnit").c_str());
   configuration.tempUnit = tempUnit;
-  Log.infoln("Temperatuer unit: %u", tempUnit);
+  Log.infoln("Temperature unit: %u", tempUnit);
 
   EEPROM_saveConfig();
   

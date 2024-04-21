@@ -53,6 +53,7 @@
 //#define TEMP_SENSOR_DS18B20
 //#define TEMP_SENSOR_BME280
 //#define TEMP_SENSOR_DHT
+#define TEMP_SENSOR_AHT
 #ifdef ESP32
   #define TEMP_SENSOR_PIN 0
 #elif ESP8266

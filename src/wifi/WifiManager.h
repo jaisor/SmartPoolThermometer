@@ -1,9 +1,9 @@
 #pragma once
 
-#ifdef ESP32
+#if defined(ESP32)
   #include <WiFi.h>
   #include <AsyncTCP.h>
-#elif ESP8266
+#elif defined(ESP8266)
   #include <ESP8266WiFi.h>
   #include <ESPAsyncTCP.h>
 #endif
