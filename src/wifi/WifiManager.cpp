@@ -159,13 +159,13 @@ void CWifiManager::listen() {
 
   // Web
   server->on("/", std::bind(&CWifiManager::handleRoot, this, std::placeholders::_1));
-  server->on("/connect", HTTP_POST, std::bind(&CWifiManager::handleConnect, this, std::placeholders::_1));
-  server->on("/config", HTTP_POST, std::bind(&CWifiManager::handleConfig, this, std::placeholders::_1));
-  server->on("/factory_reset", HTTP_POST, std::bind(&CWifiManager::handleFactoryReset, this, std::placeholders::_1));
+  server->on("/connect", HTTP_POST, [this](AsyncWebServerRequest *request) { handleConnect(request); });
+  server->on("/config", HTTP_POST, [this](AsyncWebServerRequest *request) { handleConfig(request); });
+  server->on("/factory_reset", HTTP_POST, [this](AsyncWebServerRequest *request) { handleFactoryReset(request); });
   server->begin();
   Log.infoln("Web server listening on %s port %i", WiFi.localIP().toString().c_str(), WEB_SERVER_PORT);
   
-  sensorJson["ip"] = WiFi.localIP();
+  sensorJson["ip"] = WiFi.localIP().toString();
 
   // NTP
   Log.infoln("Configuring time from %s at %i (%i)", configuration.ntpServer, configuration.gmtOffset_sec, configuration.daylightOffset_sec);
@@ -550,19 +550,19 @@ void CWifiManager::mqttCallback(char *topic, uint8_t *payload, unsigned int leng
     serializeJson(configJson, jsonStr);
     Log.noticeln("Received configuration over MQTT with json: '%s'", jsonStr.c_str());
 
-    if (configJson.containsKey("deepSleepDurationSec")) {
+    if (configJson["deepSleepDurationSec"].is<uint16_t>()) {
       configuration.deepSleepDurationSec = configJson["deepSleepDurationSec"].as<uint16_t>();
     }
 
-    if (configJson.containsKey("battVoltsDivider")) {
+    if (configJson["battVoltsDivider"].is<float>()) {
       configuration.battVoltsDivider = configJson["battVoltsDivider"].as<float>();
     }
 
-    if (configJson.containsKey("name")) {
+    if (configJson["name"].is<const char*>()) {
       strncpy(configuration.name, configJson["name"], 128);
     }
 
-    if (configJson.containsKey("mqttTopic")) {
+    if (configJson["mqttTopic"].is<const char*>()) {
       strncpy(configuration.mqttTopic, configJson["mqttTopic"], 64);
     }
 

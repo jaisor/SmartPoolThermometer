@@ -106,13 +106,48 @@ docker run -dit \
 ### MQTT JSON exporter
 
 Subscribes to a topic, parses JSON received from that topic and populates Prometheus with the compatible JSON values.
-https://github.com/tg44/mqtt-prometheus-message-exporter
+https://github.com/jaisor/mqtt-json-prometheus-exporter
 
 ```
-docker run -dit --restart unless-stopped -p 9324:9000 --name mqtt_json \
-    -v "$APPROPRIATE_VAR_PATH/mqtt_json:/data" \
-    -e CONF_PATH=/data/exporter.conf \
-    ghcr.io/tg44/mqtt-prometheus-message-exporter:latest
+docker run -dit --restart unless-stopped --name mqtt-json-prometheus-exporter \
+    -v "$APPROPRIATE_VAR_PATH/mqtt_json:/config" -p 9324:8080 \
+    jaisor/mqtt-json-prometheus-exporter:latest
+```
+
+Mount an example `config.yaml` (adapted from the [exporter's documentation](https://github.com/jaisor/mqtt-json-prometheus-exporter/blob/main/README.md)) into `$APPROPRIATE_VAR_PATH/mqtt_json`:
+
+```yaml
+mqtt:
+  url: mqtt://server.lan:1883
+  options:
+    # full list of options at https://www.npmjs.com/package/mqtt#mqttclientstreambuilder-options
+global:
+  prefix: mqtt_exporter_ # prefix prepended to all exported metrics, in addition to the pattern prefix if specified
+  labels: # these labels are added to all exported metrics
+    app: mqtt-json-prometheus-exporter
+patterns:
+  - pattern: home/+device/json # the value from '+device' part of the topic will be added to a label called 'device'
+    format: json # 'json' is the default, other option is 'val' for a scalar value
+    labels:  # additional labels to associate the metric with
+      location: home
+    label-fields: [sensor_id] # payload fields whose values become labels instead of metrics
+  - pattern: tele/+device/SENSOR
+    prefix: tm_ # default prefix is blank
+    recursive: Yes # also parse entries that are json objects themselves
+  - pattern: tele/+device/STATE
+    prefix: tms_
+    recursive: Yes
+  - pattern: tele/+device/LWT
+    prefix: tms_
+    format: val
+    value-default: 0 # 0 is default if unspecified
+    value-map: # values mapped to numbers
+      Online: 1
+  - pattern: home/+device/status
+    format: json
+    value-map: # value-map also works for non-numeric string fields in json format
+      active: 1
+      inactive: 0
 ```
 
 ### MQTT REST API for Alexa

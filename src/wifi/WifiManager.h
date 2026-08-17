@@ -38,8 +38,8 @@ private:
   PubSubClient mqtt;
   ISensorProvider *sensorProvider;
 
-  StaticJsonDocument<2048> sensorJson;
-  StaticJsonDocument<2048> configJson;
+  JsonDocument sensorJson;
+  JsonDocument configJson;
 
   void connect();
   void listen();
