@@ -52,33 +52,33 @@ All parts print without support in the default orientation.
 
 * [Box](stl/box.stl) - White PETG or something UV and heat resistant. 4 walls and top/bottom layers. 10-30% infill should be enough.
 * [Lid](stl/lid.stl) - White PETG or something UV and heat resistant. 100% Infill
-* [Gasket](stl/gasket.stl) - TPU or something flesible to act as a gasket. 100% Infill
+* [Gasket](stl/gasket.stl) - TPU or something flexible to act as a gasket. 100% Infill
 * [AnchorLoop](stl/anchor.stl) - TPU, optional, can be used to tie the thermometer in the sunny side of the pool if needed.
 
 ### Build & Assembly
 
-First - drop a brass knurled insert in each of the box bolt holes. The inserts can be driven into the plastic easily with a soldering iron. Make sure they are fairly flush with the surface. Do not lower too much as to compromise the outer wall.
+First - drop a brass knurled insert in each of the box bolt holes. The inserts can be driven into the plastic easily with a soldering iron. Make sure they are fairly flush with the surface. Do not lower the iron all the way - just enough to melt the plastic and seat the insert flush.
 Close the threads with throw-away set of bolts during the next phase of waterproofing.
 
 #### Waterproofing
 
 Below was my process for the several prototypes I made and the final version. It might be overkill, but I have not experienced a single water leak after weeks in the pool.
 
-1. Coat the box with ... epoxy like coating. Heavier on the bottom and sides of the box. Very light on the top and the lid as to not compromise dimensional fit. Wipe any excess around the top and lid if concerned, when this stuff hardens it is very difficult to correct (sanding and headaches). Mask off the inside of the box where the board and battery will go.
-2. Insert the thermometer sensor in the box and mask it off with tape about 10mm away from the box. Glue without any gaps and apply some silicone on the top side when the glue is dry. Wait for the silicone to dry/cure.
-3. Glue the solar panes, ensure no gaps on the back side. Mask off with tape the effecive area of the solar panel.
-4. Spray (rubber coating), thicker on the bottom and around the unmasked part of the sensor, thinner on top and on the lid to ensure the parts fit snuggly but still fit.
+1. Coat the box with an epoxy-like coating. Heavier on the bottom and sides of the box. Very light on the top and the lid as to not compromise dimensional fit. Wipe any excess around the top and lid mating surfaces.
+2. Insert the thermometer sensor in the box and mask it off with tape about 10mm away from the box. Glue without any gaps and apply some silicone on the top side when the glue is dry. Wait for the silicone to cure before proceeding.
+3. Glue the solar panels, ensure no gaps on the back side. Mask off with tape the effective area of the solar panel.
+4. Spray (rubber coating), thicker on the bottom and around the unmasked part of the sensor, thinner on top and on the lid to ensure the parts fit snugly but still fit.
 
 #### Circuit board layout 
 
-* Ensure the output of the TP4056 board goingto the ESP8266 is 5v with the little adjuster provided
+* Ensure the output of the TP4056 board going to the ESP8266 is 5v with the little adjuster provided
 
 #### Assembly
 
 
 
-Battery and case go on the bottom. The temp sensor in the designate hole pushed all the way down and sealed with appropriate waterproof sealer / adhesive.
-The solar panels should be glued and then water proof sealed too.
+Battery and case go on the bottom. The temp sensor in the designated hole pushed all the way down and sealed with appropriate waterproof sealer / adhesive.
+The solar panels should be glued and then waterproof sealed too.
 The linked prototype board fits inside well and can be screwed with some 1mm screws or glued or taped down.
 
 
@@ -90,7 +90,7 @@ Useful articles and guides:
 * https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/
 * https://grafana.com/docs/grafana-cloud/quickstart/docker-compose-linux/
 
-The following instructions are better suited for a "local" install - desktop, raspberry pi, server on LAN. Deployments expected to communicate over public internet should use appropriate encryption and authentication configuration. Large-scale deployments might also want to leverage a docker-compose, Terraform, etc. 
+The following instructions are better suited for a "local" install - desktop, raspberry pi, server on LAN. Deployments expected to communicate over public internet should use appropriate encryption and authentication.
 
 ### MQTT broker
 
@@ -162,14 +162,14 @@ docker run -dit --restart unless-stopped -p 3443:3443 \
   jaisor/mqtt-rest-api:latest
 ```
 
-### Prometehus
+### Prometheus
 
 `prometheus/config.yml`
 
 ```
 scrape_configs:
 
-# Prometehus itself
+# Prometheus itself
   - job_name: 'prometheus'
     scrape_interval: 30s
     static_configs:
